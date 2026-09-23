@@ -1,0 +1,6980 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>FFSCORER - Free Fire OCR</title>
+
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+
+<style>
+*{
+    box-sizing:border-box;
+    margin:0;
+    padding:0;
+}
+
+body{
+    font-family:Arial,Helvetica,sans-serif;
+    background:#090b10;
+    color:#f1f3f5;
+}
+
+.container{
+    max-width:1250px;
+    margin:auto;
+    padding:30px;
+}
+
+header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:30px;
+}
+
+.logo{
+    font-size:28px;
+    font-weight:900;
+    letter-spacing:-1px;
+}
+
+.logo span{
+    color:#ff3e4d;
+}
+
+.subtitle{
+    color:#858b98;
+    font-size:14px;
+}
+
+.card{
+    background:#11141b;
+    border:1px solid #272c38;
+    border-radius:16px;
+    padding:24px;
+    margin-bottom:20px;
+}
+
+.card-title{
+    font-size:18px;
+    font-weight:800;
+    margin-bottom:18px;
+}
+
+.upload{
+    border:2px dashed #303642;
+    border-radius:14px;
+    min-height:220px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    cursor:pointer;
+    transition:.2s;
+    background:#0d1016;
+}
+
+.upload:hover{
+    border-color:#ff4655;
+    background:#12151d;
+}
+
+.upload.drag{
+    border-color:#ff4655;
+    background:#181119;
+}
+
+.upload input{
+    display:none;
+}
+
+.upload-icon{
+    font-size:42px;
+    margin-bottom:10px;
+}
+
+.upload h3{
+    margin-bottom:8px;
+}
+
+.upload p{
+    color:#7d8491;
+    font-size:13px;
+}
+
+.preview{
+    display:none;
+}
+
+.preview img{
+    max-width:100%;
+    max-height:500px;
+    display:block;
+    margin:auto;
+    border-radius:10px;
+}
+
+.actions{
+    display:flex;
+    gap:10px;
+    margin-top:18px;
+    flex-wrap:wrap;
+}
+
+button{
+    border:none;
+    border-radius:9px;
+    padding:12px 18px;
+    font-weight:800;
+    cursor:pointer;
+    color:white;
+    background:#242a37;
+}
+
+button:hover{
+    filter:brightness(1.12);
+}
+
+.btn-primary{
+    background:#ff4655;
+}
+
+.btn-primary:hover{
+    background:#ff5967;
+}
+
+.btn-success{
+    background:#18a974;
+}
+
+.btn-danger{
+    background:#c73545;
+}
+
+button:disabled{
+    opacity:.45;
+    cursor:not-allowed;
+}
+
+.progress-wrap{
+    display:none;
+    margin-top:20px;
+}
+
+.progress-info{
+    display:flex;
+    justify-content:space-between;
+    color:#9097a5;
+    font-size:13px;
+    margin-bottom:8px;
+}
+
+.progress{
+    width:100%;
+    height:8px;
+    background:#202530;
+    border-radius:20px;
+    overflow:hidden;
+}
+
+.progress-bar{
+    height:100%;
+    width:0%;
+    background:#ff4655;
+    transition:.2s;
+}
+
+.status{
+    margin-top:10px;
+    font-size:13px;
+    color:#9ba2af;
+}
+
+.ocr-debug{
+    display:none;
+}
+
+.debug-box{
+    background:#080a0e;
+    border:1px solid #292e39;
+    border-radius:10px;
+    padding:15px;
+    max-height:300px;
+    overflow:auto;
+    white-space:pre-wrap;
+    font-family:monospace;
+    font-size:12px;
+    color:#b9c0cb;
+}
+
+.scan-status{
+    display:none;
+    align-items:center;
+    gap:10px;
+    margin-bottom:15px;
+}
+
+.status-dot{
+    width:9px;
+    height:9px;
+    border-radius:50%;
+    background:#20d39a;
+}
+
+.table-wrap{
+    overflow-x:auto;
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+}
+
+th{
+    text-align:left;
+    font-size:12px;
+    color:#8d95a3;
+    padding:14px 12px;
+    border-bottom:1px solid #292e38;
+    text-transform:uppercase;
+}
+
+td{
+    padding:17px 12px;
+    border-bottom:1px solid #242934;
+    vertical-align:top;
+}
+
+.position{
+    font-size:17px;
+    font-weight:900;
+}
+
+.team{
+    font-size:16px;
+    font-weight:900;
+}
+
+.players{
+    margin-top:8px;
+    display:flex;
+    flex-direction:column;
+    gap:5px;
+}
+
+.player{
+    color:#89919f;
+    font-size:12px;
+}
+
+.player strong{
+    color:#f0f2f5;
+}
+
+.kill-number{
+    color:#ffd500;
+    font-weight:900;
+}
+
+.placement-point{
+    font-weight:800;
+}
+
+.total{
+    color:#ff4655;
+    font-size:20px;
+    font-weight:900;
+}
+
+.edit-btn{
+    padding:8px 13px;
+    font-size:12px;
+}
+
+.empty{
+    text-align:center;
+    padding:45px 20px;
+    color:#7d8491;
+}
+
+.toast{
+    position:fixed;
+    right:20px;
+    bottom:20px;
+    background:#171b24;
+    border:1px solid #323846;
+    padding:14px 18px;
+    border-radius:10px;
+    display:none;
+    z-index:9999;
+    box-shadow:0 10px 40px rgba(0,0,0,.4);
+}
+
+.toast.error{
+    border-color:#ff4655;
+}
+
+.toast.success{
+    border-color:#18a974;
+}
+
+.loading{
+    display:inline-block;
+    width:14px;
+    height:14px;
+    border:2px solid #555;
+    border-top-color:#fff;
+    border-radius:50%;
+    animation:spin .7s linear infinite;
+}
+
+@keyframes spin{
+    to{
+        transform:rotate(360deg);
+    }
+}
+
+.badge{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    background:#12352c;
+    color:#20d39a;
+    border-radius:20px;
+    padding:6px 10px;
+    font-size:11px;
+    font-weight:800;
+}
+
+.edit-input{
+    width:100%;
+    background:#0a0d12;
+    color:white;
+    border:1px solid #363d4a;
+    border-radius:6px;
+    padding:7px;
+    outline:none;
+}
+
+.edit-input:focus{
+    border-color:#ff4655;
+}
+
+.small-note{
+    color:#727a88;
+    font-size:12px;
+    margin-top:10px;
+    line-height:1.6;
+}
+
+@media(max-width:700px){
+    .container{
+        padding:15px;
+    }
+
+    header{
+        flex-direction:column;
+        align-items:flex-start;
+        gap:8px;
+    }
+
+    .card{
+        padding:16px;
+    }
+
+    th,td{
+        padding:10px 7px;
+    }
+}
+
+/* ===== SCORE HISTORY ===== */
+.history-toolbar{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    margin-bottom:16px;
+    flex-wrap:wrap;
+}
+
+.merge-panel{
+    margin-bottom:14px;
+    padding:12px 13px;
+    border:1px solid #293340;
+    border-radius:14px;
+    background:linear-gradient(180deg,#10161e,#0d1219);
+}
+.merge-toolbar{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    flex-wrap:wrap;
+}
+.merge-info{
+    display:flex;
+    align-items:center;
+    gap:10px;
+}
+.merge-icon{
+    width:34px;
+    height:34px;
+    display:grid;
+    place-items:center;
+    border-radius:9px;
+    background:rgba(255,70,85,.10);
+    border:1px solid rgba(255,70,85,.18);
+}
+.merge-info strong{
+    display:block;
+    font-size:12px;
+}
+.merge-info span{
+    display:block;
+    margin-top:2px;
+    color:#707b89;
+    font-size:10px;
+}
+.merge-actions{
+    display:flex;
+    align-items:center;
+    gap:7px;
+    flex-wrap:wrap;
+}
+.merge-count{
+    min-width:76px;
+    text-align:center;
+    padding:8px 10px;
+    border-radius:9px;
+    background:#171e27;
+    border:1px solid #303a47;
+    color:#aeb8c5;
+    font-size:11px;
+    font-weight:800;
+}
+.merge-button{
+    min-height:38px;
+    padding:0 13px;
+}
+.merge-button:disabled{
+    opacity:.42;
+    cursor:not-allowed;
+    transform:none !important;
+}
+.select-all-button{
+    min-height:38px;
+    padding:0 11px;
+}
+
+.history-select{
+    width:19px;
+    height:19px;
+    margin:0;
+    accent-color:#ff4655;
+    cursor:pointer;
+}
+.history-select-wrap{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    flex:0 0 25px;
+}
+.history-item.selected{
+    border-color:rgba(255,70,85,.65);
+    background:linear-gradient(90deg,rgba(255,70,85,.07),#0d1016);
+    box-shadow:0 0 0 1px rgba(255,70,85,.10);
+}
+.history-item.selected .history-title{
+    color:#fff;
+}
+.history-select-label{
+    cursor:pointer;
+}
+
+.merged-result-card{
+    margin-top:16px;
+    overflow:hidden;
+}
+.merged-head{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:15px;
+    margin-bottom:14px;
+    flex-wrap:wrap;
+}
+.merged-head-left .card-title{
+    margin:0;
+}
+.merged-subtitle{
+    color:#747e8d;
+    font-size:11px;
+    margin-top:5px;
+}
+.merged-actions{
+    display:flex;
+    gap:7px;
+    flex-wrap:wrap;
+}
+
+.detailed-result-wrap{
+    overflow:auto;
+    border:1px solid #293340;
+    border-radius:15px;
+    background:#070b10;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.02);
+}
+.detailed-tournament-table{
+    width:100%;
+    min-width:1180px;
+    border-collapse:separate;
+    border-spacing:0;
+    font-variant-numeric:tabular-nums;
+}
+.detailed-tournament-table th{
+    padding:10px 9px;
+    background:#111820;
+    border-right:1px solid #26303c;
+    border-bottom:1px solid #35404d;
+    color:#8d98a7;
+    font-size:9px;
+    font-weight:1000;
+    text-transform:uppercase;
+    letter-spacing:.55px;
+    text-align:center;
+    white-space:nowrap;
+}
+.detailed-tournament-table th.team-header{
+    text-align:left;
+}
+.detailed-tournament-table th.match-group{
+    color:#79bfff;
+    font-size:11px;
+    background:linear-gradient(180deg,#172331,#101720);
+}
+.detailed-tournament-table th.total-group{
+    color:#ff6572;
+    background:linear-gradient(180deg,#28151a,#141015);
+}
+.detailed-tournament-table td{
+    height:58px;
+    padding:7px 9px;
+    border-right:1px solid #202934;
+    border-bottom:1px solid #202934;
+    background:#080d13;
+    color:#e1e6ec;
+    text-align:center;
+    font-size:12px;
+    font-weight:750;
+}
+.detailed-tournament-table tbody tr:last-child td{
+    border-bottom:0;
+}
+.detailed-tournament-table tbody tr:hover td{
+    background:#0d141d;
+}
+.detailed-tournament-table td.team-cell{
+    min-width:190px;
+    text-align:left;
+    position:sticky;
+    left:0;
+    z-index:2;
+    background:#0a1016;
+    box-shadow:7px 0 13px rgba(0,0,0,.18);
+}
+.detailed-tournament-table th.team-header{
+    position:sticky;
+    left:0;
+    z-index:5;
+}
+.detailed-tournament-table td.rank-cell{
+    min-width:50px;
+    width:50px;
+    position:sticky;
+    left:0;
+    z-index:4;
+    background:#0a1016;
+}
+.detailed-tournament-table th.rank-header{
+    position:sticky;
+    left:0;
+    z-index:6;
+}
+.detailed-tournament-table .rank-wrap{
+    display:flex;
+    justify-content:center;
+    align-items:center;
+}
+.detailed-tournament-table .rank-badge{
+    width:29px;
+    height:29px;
+    margin:0;
+}
+.detailed-team{
+    display:flex;
+    align-items:center;
+    gap:9px;
+    min-width:0;
+}
+.detailed-team-dot{
+    width:7px;
+    height:7px;
+    border-radius:50%;
+    flex:0 0 7px;
+    background:#4c5868;
+}
+.detailed-team-name{
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+    font-weight:1000;
+    color:#f0f3f6;
+}
+.detailed-team-sub{
+    display:block;
+    margin-top:2px;
+    color:#657182;
+    font-size:9px;
+    font-weight:650;
+}
+.match-pos{
+    display:inline-flex;
+    min-width:39px;
+    min-height:30px;
+    align-items:center;
+    justify-content:center;
+    padding:0 8px;
+    border-radius:8px;
+    background:#151e29;
+    border:1px solid #2c3948;
+    color:#dbe2ea;
+    font-weight:1000;
+}
+.match-pos.boyah{
+    position:relative;
+    min-width:64px;
+    background:linear-gradient(135deg,#6e5200,#241d04);
+    border-color:#f5c400;
+    color:#ffe36a;
+    box-shadow:
+        0 0 0 1px rgba(255,210,0,.15),
+        0 0 15px rgba(255,190,0,.28);
+    animation:booyahPulse 1.8s ease-in-out infinite;
+}
+.match-pos.boyah::before{
+    content:"👑";
+    margin-right:4px;
+    font-size:11px;
+}
+.match-pos.boyah::after{
+    content:"";
+    position:absolute;
+    inset:-3px;
+    border-radius:10px;
+    border:1px solid rgba(255,215,0,.28);
+    opacity:.7;
+    animation:booyahGlow 1.8s ease-in-out infinite;
+}
+@keyframes booyahPulse{
+    0%,100%{box-shadow:0 0 0 1px rgba(255,210,0,.12),0 0 10px rgba(255,190,0,.18)}
+    50%{box-shadow:0 0 0 2px rgba(255,210,0,.22),0 0 24px rgba(255,190,0,.38)}
+}
+@keyframes booyahGlow{
+    0%,100%{transform:scale(1);opacity:.45}
+    50%{transform:scale(1.045);opacity:.9}
+}
+.match-kill{
+    color:#ffd500;
+    font-size:13px;
+    font-weight:1000;
+}
+.match-kill::before{
+    content:"◉";
+    margin-right:5px;
+    color:#8793a4;
+    font-size:9px;
+}
+.match-point{
+    color:#fff;
+    font-weight:1000;
+}
+.match-point.positive{
+    color:#ffd500;
+}
+.empty-match{
+    color:#465263;
+}
+.total-pos{
+    color:#dce2e8;
+    font-weight:900;
+}
+.total-kill{
+    color:#ffd500;
+    font-size:13px;
+    font-weight:1000;
+}
+.total-kill-point{
+    color:#e8edf3;
+    font-weight:900;
+}
+.grand-total{
+    color:#ff5967;
+    font-size:16px;
+    font-weight:1000;
+}
+.detailed-tournament-table tr.rank-1 td{
+    background:linear-gradient(90deg,rgba(255,207,0,.045),rgba(255,207,0,.012));
+}
+.detailed-tournament-table tr.rank-1 td.team-cell,
+.detailed-tournament-table tr.rank-1 td.rank-cell{
+    background:linear-gradient(90deg,rgba(255,207,0,.08),#0c1117);
+}
+.detailed-tournament-table tr.rank-2 td{
+    background:linear-gradient(90deg,rgba(200,215,230,.028),transparent);
+}
+.detailed-tournament-table tr.rank-3 td{
+    background:linear-gradient(90deg,rgba(215,140,75,.032),transparent);
+}
+.tournament-legend{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    flex-wrap:wrap;
+    margin-top:10px;
+    color:#697586;
+    font-size:10px;
+    font-weight:700;
+}
+.legend-booyah{
+    display:inline-flex;
+    align-items:center;
+    gap:5px;
+    color:#d7b800;
+}
+.legend-dot{
+    width:6px;
+    height:6px;
+    border-radius:50%;
+    background:#4c5868;
+}
+.tournament-table-wrap{
+    overflow-x:auto;
+    border:1px solid #293340;
+    border-radius:14px;
+    background:#090d12;
+}
+.tournament-table{
+    width:100%;
+    min-width:760px;
+    border-collapse:collapse;
+}
+.tournament-table th{
+    padding:11px 12px;
+    background:#151b23;
+    border-bottom:1px solid #303947;
+    color:#8e99a8;
+    font-size:10px;
+    font-weight:900;
+    text-transform:uppercase;
+    letter-spacing:.55px;
+    white-space:nowrap;
+}
+.tournament-table td{
+    padding:11px 12px;
+    border-bottom:1px solid #202833;
+    color:#dce2e9;
+    font-size:12px;
+    font-weight:700;
+}
+.tournament-table tbody tr:last-child td{
+    border-bottom:0;
+}
+.tournament-table tbody tr{
+    transition:.15s ease;
+}
+.tournament-table tbody tr:hover{
+    background:#10161e;
+}
+.tournament-table .rank-cell{
+    width:55px;
+    text-align:center;
+}
+.tournament-table .team-cell{
+    min-width:220px;
+    font-weight:900;
+}
+.tournament-table .num-cell{
+    text-align:center;
+    font-variant-numeric:tabular-nums;
+}
+.tournament-table .total-cell{
+    text-align:center;
+    color:#ff5967;
+    font-size:15px;
+    font-weight:1000;
+    font-variant-numeric:tabular-nums;
+}
+.tournament-table .kill-cell{
+    text-align:center;
+    color:#ffd500;
+    font-variant-numeric:tabular-nums;
+}
+.tournament-table .place-cell{
+    text-align:center;
+    color:#e7ebf0;
+    font-variant-numeric:tabular-nums;
+}
+.rank-badge{
+    width:28px;
+    height:28px;
+    margin:auto;
+    display:grid;
+    place-items:center;
+    border-radius:8px;
+    background:#151c25;
+    color:#8d98a7;
+    font-size:11px;
+    font-weight:1000;
+}
+.rank-1 .rank-badge{
+    background:rgba(255,213,0,.14);
+    color:#ffd500;
+}
+.rank-2 .rank-badge{
+    background:rgba(200,210,225,.12);
+    color:#dce3eb;
+}
+.rank-3 .rank-badge{
+    background:rgba(205,127,50,.13);
+    color:#d99a61;
+}
+.rank-1{
+    background:linear-gradient(90deg,rgba(255,213,0,.045),transparent 45%);
+}
+.rank-2{
+    background:linear-gradient(90deg,rgba(200,210,225,.035),transparent 45%);
+}
+.rank-3{
+    background:linear-gradient(90deg,rgba(205,127,50,.035),transparent 45%);
+}
+.team-name-table{
+    display:flex;
+    align-items:center;
+    gap:9px;
+}
+.team-name-dot{
+    width:7px;
+    height:7px;
+    border-radius:50%;
+    background:#4a5565;
+    flex:0 0 7px;
+}
+.rank-1 .team-name-dot{
+    background:#ffd500;
+}
+.rank-2 .team-name-dot{
+    background:#cbd3df;
+}
+.rank-3 .team-name-dot{
+    background:#d18b55;
+}
+.tournament-empty{
+    padding:25px;
+    text-align:center;
+    color:#6e7887;
+    font-size:12px;
+}
+@media(max-width:700px){
+    .merge-toolbar{
+        align-items:stretch;
+    }
+    .merge-actions{
+        width:100%;
+    }
+    .merge-actions > *{
+        flex:1;
+    }
+}
+
+.history-list{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+}
+.history-item{
+    background:#0d1016;
+    border:1px solid #262c38;
+    border-radius:13px;
+    padding:14px 16px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:15px;
+    transition:.18s ease;
+}
+.history-item:hover{
+    border-color:#3b4352;
+    transform:translateY(-1px);
+}
+.history-main{
+    min-width:0;
+}
+.history-title{
+    font-weight:900;
+    font-size:14px;
+    margin-bottom:5px;
+}
+.history-meta{
+    color:#7e8795;
+    font-size:12px;
+}
+.history-score{
+    text-align:right;
+    white-space:nowrap;
+}
+.history-score strong{
+    color:#ff4655;
+    font-size:20px;
+}
+.history-actions{
+    display:flex;
+    gap:7px;
+}
+.icon-btn{
+    width:36px;
+    height:36px;
+    padding:0;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:9px;
+}
+.btn-outline{
+    background:transparent;
+    border:1px solid #353c49;
+}
+.btn-outline:hover{
+    border-color:#ff4655;
+}
+.danger-outline{
+    background:transparent;
+    border:1px solid #56313a;
+    color:#ff7180;
+}
+
+/* ===== BETTER EDIT UI ===== */
+.edit-btn{
+    padding:9px 13px;
+    font-size:12px;
+    border:1px solid #3a414f;
+    background:#181d27;
+    transition:.18s ease;
+}
+.edit-btn:hover{
+    background:#242b38;
+    border-color:#ff4655;
+    transform:translateY(-1px);
+}
+
+.editor-modal{
+    position:fixed;
+    inset:0;
+    z-index:10000;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    padding:16px;
+    background:rgba(3,6,10,.82);
+    backdrop-filter:blur(10px);
+}
+.editor-modal.show{
+    display:flex;
+}
+
+.editor-panel{
+    width:min(820px,100%);
+    max-height:min(820px,94vh);
+    overflow:hidden;
+    display:flex;
+    flex-direction:column;
+    background:#0d1219;
+    border:1px solid #2b3442;
+    border-radius:22px;
+    box-shadow:0 30px 100px rgba(0,0,0,.65);
+    animation:editorIn .18s ease-out;
+}
+@keyframes editorIn{
+    from{opacity:0;transform:translateY(10px) scale(.985)}
+    to{opacity:1;transform:translateY(0) scale(1)}
+}
+
+.editor-head{
+    padding:18px 22px;
+    border-bottom:1px solid #252d38;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:15px;
+    background:linear-gradient(180deg,#121922,#0d1219);
+}
+.editor-head-left{
+    display:flex;
+    align-items:center;
+    gap:13px;
+    min-width:0;
+}
+.editor-head-icon{
+    width:42px;
+    height:42px;
+    flex:0 0 42px;
+    display:grid;
+    place-items:center;
+    border-radius:12px;
+    background:rgba(255,70,85,.12);
+    border:1px solid rgba(255,70,85,.22);
+    font-size:19px;
+}
+.editor-head h3{
+    margin:0;
+    font-size:17px;
+    font-weight:900;
+}
+.editor-sub{
+    color:#7f8998;
+    font-size:12px;
+    margin-top:4px;
+}
+.close-editor{
+    width:38px;
+    height:38px;
+    padding:0;
+    border-radius:11px;
+    font-size:21px;
+    color:#aab3c0;
+    background:#171d26;
+    border:1px solid #303947;
+}
+.close-editor:hover{
+    color:#fff;
+    border-color:#596577;
+}
+
+.editor-body{
+    padding:20px 22px;
+    overflow:auto;
+}
+
+.editor-section{
+    margin-bottom:18px;
+}
+.editor-section:last-child{
+    margin-bottom:0;
+}
+.editor-section-label{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    margin-bottom:9px;
+}
+.editor-section-label strong{
+    font-size:12px;
+    text-transform:uppercase;
+    letter-spacing:.55px;
+    color:#aeb7c4;
+}
+.editor-section-label span{
+    font-size:11px;
+    color:#687383;
+}
+
+.editor-input{
+    width:100%;
+    box-sizing:border-box;
+    background:#080c11;
+    color:#fff;
+    border:1px solid #35404e;
+    border-radius:12px;
+    padding:12px 13px;
+    outline:none;
+    font-size:14px;
+    transition:.15s ease;
+}
+.editor-input:hover{
+    border-color:#4a5666;
+}
+.editor-input:focus{
+    border-color:#ff4655;
+    box-shadow:0 0 0 3px rgba(255,70,85,.10);
+}
+
+.team-name-wrap{
+    position:relative;
+}
+.team-name-wrap .editor-input{
+    padding-left:43px;
+    font-size:16px;
+    font-weight:800;
+}
+.team-name-badge{
+    position:absolute;
+    left:12px;
+    top:50%;
+    transform:translateY(-50%);
+    color:#ff4655;
+    font-weight:900;
+    pointer-events:none;
+}
+
+.placement-grid{
+    display:grid;
+    grid-template-columns:repeat(6,1fr);
+    gap:7px;
+}
+.placement-option{
+    min-height:49px;
+    padding:7px 4px;
+    border:1px solid #2d3643;
+    border-radius:10px;
+    background:#111720;
+    color:#b7c0cc;
+    cursor:pointer;
+    transition:.15s ease;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+}
+.placement-option:hover{
+    border-color:#586576;
+    background:#171e28;
+}
+.placement-option .place-num{
+    font-size:14px;
+    font-weight:900;
+    color:#fff;
+    line-height:1;
+}
+.placement-option .place-point{
+    margin-top:4px;
+    font-size:10px;
+    color:#707b8b;
+    line-height:1;
+}
+.placement-option.active{
+    background:rgba(255,70,85,.12);
+    border-color:#ff4655;
+    box-shadow:0 0 0 2px rgba(255,70,85,.08);
+}
+.placement-option.active .place-num{
+    color:#ff5967;
+}
+.placement-option.active .place-point{
+    color:#ffd500;
+}
+
+.player-editor{
+    border:1px solid #28313d;
+    border-radius:15px;
+    overflow:hidden;
+    background:#0a0f15;
+}
+.player-editor-title{
+    padding:13px 14px;
+    border-bottom:1px solid #252e3a;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:10px;
+    background:#0e141c;
+}
+.player-editor-title strong{
+    font-size:13px;
+}
+.player-editor-title span{
+    color:#6f7a89;
+    font-size:10px;
+    font-weight:800;
+    letter-spacing:.4px;
+}
+.player-list{
+    padding:8px;
+}
+.player-card{
+    display:grid;
+    grid-template-columns:32px minmax(0,1fr) auto;
+    align-items:center;
+    gap:10px;
+    padding:9px;
+    margin-bottom:7px;
+    border:1px solid #252e39;
+    border-radius:11px;
+    background:#0f151d;
+}
+.player-card:last-child{
+    margin-bottom:0;
+}
+.player-number{
+    width:30px;
+    height:30px;
+    display:grid;
+    place-items:center;
+    border-radius:9px;
+    background:#171e28;
+    color:#7e8999;
+    font-size:11px;
+    font-weight:900;
+}
+.player-card .editor-input{
+    min-width:0;
+    padding:9px 10px;
+    border-radius:9px;
+}
+.kill-control{
+    display:flex;
+    align-items:center;
+    gap:5px;
+}
+.kill-button{
+    width:34px;
+    height:34px;
+    flex:0 0 34px;
+    padding:0;
+    display:grid;
+    place-items:center;
+    border-radius:9px;
+    border:1px solid #303a48;
+    background:#171e27;
+    color:#d7dee8;
+    font-size:18px;
+    font-weight:900;
+    cursor:pointer;
+    transition:.15s ease;
+}
+.kill-button:hover{
+    border-color:#566477;
+    background:#202936;
+}
+.kill-button.plus:hover{
+    border-color:#d5b800;
+    color:#ffe000;
+}
+.kill-input{
+    width:58px !important;
+    text-align:center;
+    padding:9px 4px !important;
+    font-size:15px !important;
+    font-weight:900;
+    color:#ffd500;
+}
+.kill-label{
+    margin-left:2px;
+    font-size:10px;
+    font-weight:900;
+    color:#6f7a89;
+}
+
+.editor-summary{
+    margin-top:14px;
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:8px;
+}
+.summary-box{
+    padding:12px;
+    border:1px solid #293340;
+    border-radius:12px;
+    background:#0a0f15;
+}
+.summary-box span{
+    display:block;
+    color:#707b89;
+    font-size:10px;
+    font-weight:800;
+    text-transform:uppercase;
+    letter-spacing:.45px;
+}
+.summary-box strong{
+    display:block;
+    margin-top:4px;
+    color:#fff;
+    font-size:20px;
+}
+.summary-box.kill strong{
+    color:#ffd500;
+}
+.summary-box.total{
+    border-color:rgba(255,70,85,.25);
+    background:rgba(255,70,85,.055);
+}
+.summary-box.total strong{
+    color:#ff5967;
+}
+
+.editor-footer{
+    padding:13px 22px;
+    border-top:1px solid #252d38;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:10px;
+    background:#0e141b;
+}
+.editor-footer-note{
+    color:#687383;
+    font-size:11px;
+}
+.editor-footer-actions{
+    display:flex;
+    gap:8px;
+}
+.editor-footer .btn-outline,
+.editor-footer .btn-primary{
+    min-height:40px;
+    padding:0 15px;
+}
+
+@media(max-width:700px){
+    .editor-modal{
+        padding:8px;
+        align-items:flex-end;
+    }
+    .editor-panel{
+        width:100%;
+        max-height:96vh;
+        border-radius:18px 18px 0 0;
+    }
+    .editor-head,
+    .editor-body,
+    .editor-footer{
+        padding-left:14px;
+        padding-right:14px;
+    }
+    .placement-grid{
+        grid-template-columns:repeat(4,1fr);
+    }
+    .player-card{
+        grid-template-columns:30px minmax(0,1fr);
+    }
+    .kill-control{
+        grid-column:2;
+        justify-content:flex-start;
+        margin-top:-2px;
+    }
+    .editor-summary{
+        grid-template-columns:1fr 1fr 1fr;
+    }
+    .editor-footer-note{
+        display:none;
+    }
+}
+
+
+.history-top3{
+    grid-column:1 / -1;
+    display:grid;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:8px;
+    margin-top:12px;
+    padding-top:12px;
+    border-top:1px solid #242d38;
+}
+.history-rank{
+    min-width:0;
+    padding:10px 11px;
+    border:1px solid #293340;
+    border-radius:11px;
+    background:#0d131b;
+}
+.history-rank-head{
+    display:flex;
+    align-items:center;
+    gap:7px;
+    margin-bottom:5px;
+}
+.history-rank-number{
+    width:23px;
+    height:23px;
+    flex:0 0 23px;
+    display:grid;
+    place-items:center;
+    border-radius:7px;
+    background:#171e27;
+    color:#aeb7c3;
+    font-size:11px;
+    font-weight:900;
+}
+.history-rank:first-child .history-rank-number{
+    background:rgba(255,213,0,.13);
+    color:#ffd500;
+}
+.history-rank:nth-child(2) .history-rank-number{
+    background:rgba(190,200,215,.12);
+    color:#d7dee8;
+}
+.history-rank:nth-child(3) .history-rank-number{
+    background:rgba(205,127,50,.12);
+    color:#d99a61;
+}
+.history-rank-team{
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+    color:#e9edf2;
+    font-size:12px;
+    font-weight:900;
+}
+.history-rank-points{
+    color:#ff5967;
+    font-size:16px;
+    font-weight:900;
+}
+.history-rank-points small{
+    color:#687383;
+    font-size:9px;
+    font-weight:800;
+    margin-left:2px;
+}
+@media(max-width:700px){
+    .history-top3{
+        grid-template-columns:1fr;
+    }
+}
+
+.history-empty{
+    padding:28px 15px;
+    text-align:center;
+    color:#707987;
+    border:1px dashed #2b313d;
+    border-radius:12px;
+}
+@media(max-width:700px){
+    .form-grid,
+    .player-row{
+        grid-template-columns:1fr;
+    }
+    .editor-footer{
+        flex-direction:column-reverse;
+    }
+    .editor-footer button{
+        width:100%;
+    }
+    .history-item{
+        align-items:flex-start;
+        flex-direction:column;
+    }
+    .history-score{
+        text-align:left;
+    }
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<header>
+    <div>
+        <div class="logo">
+            FF<span>SCORER</span>
+        </div>
+        <div class="subtitle">
+            Free Fire Tournament OCR Scoring System
+        </div>
+    </div>
+
+    <div class="badge">
+        ● OCR READY
+    </div>
+</header>
+
+
+<!-- UPLOAD -->
+<div class="card">
+
+    <div class="card-title">
+        Upload Screenshot Free Fire
+    </div>
+
+    <label class="upload" id="uploadBox">
+
+        <input
+            type="file"
+            id="imageInput"
+            accept="image/png,image/jpeg,image/jpg"
+        >
+
+        <div id="uploadContent">
+
+            <div class="upload-icon">
+                📷
+            </div>
+
+            <h3>
+                Upload Screenshot Hasil Match
+            </h3>
+
+            <p>
+                Gunakan screenshot hasil match Free Fire asli
+            </p>
+
+            <p class="small-note">
+                Scanner akan membaca nama player dan kill
+                berdasarkan posisi pada scoreboard Free Fire.
+            </p>
+
+        </div>
+
+    </label>
+
+
+    <div class="preview" id="previewBox">
+
+        <img id="previewImage">
+
+        <div class="actions">
+
+            <button
+                class="btn-primary"
+                id="scanButton"
+            >
+                🔍 Scan Screenshot
+            </button>
+
+            <button
+                id="removeButton"
+            >
+                Hapus
+            </button>
+
+        </div>
+
+    </div>
+
+
+    <div
+        class="progress-wrap"
+        id="progressWrap"
+    >
+
+        <div class="progress-info">
+            <span id="progressText">
+                Menyiapkan OCR...
+            </span>
+
+            <span id="progressPercent">
+                0%
+            </span>
+        </div>
+
+        <div class="progress">
+            <div
+                class="progress-bar"
+                id="progressBar"
+            ></div>
+        </div>
+
+        <div
+            class="status"
+            id="scanStatus"
+        ></div>
+
+    </div>
+
+</div>
+
+
+<!-- DEBUG OCR -->
+<div
+    class="card ocr-debug"
+    id="debugCard"
+>
+
+    <div
+        style="
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            margin-bottom:15px;
+        "
+    >
+
+        <div class="card-title" style="margin:0">
+            OCR Result
+        </div>
+
+        <div class="badge">
+            <span id="ocrConfidence">
+                OCR
+            </span>
+        </div>
+
+    </div>
+
+    <div
+        class="debug-box"
+        id="debugResult"
+    ></div>
+
+</div>
+
+
+<!-- RESULT -->
+<div class="card">
+
+    <div
+        style="
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            margin-bottom:10px;
+        "
+    >
+
+        <div class="card-title" style="margin:0">
+            Hasil Scan
+        </div>
+
+        <button
+            id="rescanButton"
+            style="display:none"
+        >
+            🔄 Scan Ulang
+        </button>
+
+    </div>
+
+
+    <div
+        class="scan-status"
+        id="resultStatus"
+    >
+
+        <div class="status-dot"></div>
+
+        <span id="resultStatusText">
+            Hasil berhasil diproses
+        </span>
+
+    </div>
+
+
+    <div class="table-wrap">
+
+        <table>
+
+            <thead>
+
+                <tr>
+
+                    <th>Position</th>
+
+                    <th>Team / Player</th>
+
+                    <th>Placement</th>
+
+                    <th>Kill</th>
+
+                    <th>Kill Point</th>
+
+                    <th>Total</th>
+
+                    <th>Edit</th>
+
+                </tr>
+
+            </thead>
+
+            <tbody id="resultBody">
+
+                <tr>
+
+                    <td
+                        colspan="7"
+                        class="empty"
+                    >
+                        Belum ada hasil scan.
+                    </td>
+
+                </tr>
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+
+    <div
+        class="actions"
+        id="confirmArea"
+        style="display:none"
+    >
+
+        <button
+            class="btn-success"
+            id="confirmButton"
+        >
+            ✓ Confirm & Simpan
+        </button>
+
+    </div>
+
+</div>
+
+</div>
+
+
+
+<!-- SCORE HISTORY -->
+<div class="card">
+    <div class="history-toolbar">
+        <div>
+            <div class="card-title" style="margin:0">Riwayat Skor</div>
+            <div class="small-note" style="margin-top:5px">
+                Hasil pertandingan yang sudah dikonfirmasi tersimpan di browser ini.
+            </div>
+        </div>
+        <button class="btn-outline" id="clearHistoryButton">🗑 Hapus Riwayat</button>
+    </div>
+    <div class="merge-panel">
+        <div class="merge-toolbar">
+            <div class="merge-info">
+                <div class="merge-icon">🏆</div>
+                <div>
+                    <strong>Gabungkan Hasil Match</strong>
+                    <span>Pilih 2 atau lebih match untuk membuat Tournament Result.</span>
+                </div>
+            </div>
+
+            <div class="merge-actions">
+                <div class="merge-count" id="mergeCount">0 dipilih</div>
+                <button class="btn-outline select-all-button" id="selectAllMatchesButton" type="button">
+                    Pilih Semua
+                </button>
+                <button class="btn-primary merge-button" id="mergeMatchesButton" type="button" disabled>
+                    🏆 Gabungkan Match
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="history-list" id="historyList">
+        <div class="history-empty">Belum ada riwayat pertandingan.</div>
+    </div>
+</div>
+
+<div class="card merged-result-card" id="mergedResultCard" style="display:none;">
+    <div class="merged-head">
+        <div class="merged-head-left">
+            <div class="card-title">Tournament Result</div>
+            <div class="merged-subtitle" id="mergedResultSubtitle">
+                Hasil gabungan beberapa match.
+            </div>
+        </div>
+
+        <div class="merged-actions">
+            <button class="btn-outline" id="rebuildMergedResultButton" type="button">
+                ↻ Hitung Ulang
+            </button>
+
+            <button class="btn-outline" id="clearMergedResultButton" type="button">
+                × Hapus Hasil
+            </button>
+        </div>
+    </div>
+
+    <div class="detailed-result-wrap">
+        <table class="detailed-tournament-table">
+            <thead id="mergedResultHead"></thead>
+            <tbody id="mergedResultBody"></tbody>
+        </table>
+    </div>
+
+    <div class="tournament-legend">
+        <span class="legend-booyah">👑 BOOYAH = Rank 1</span>
+        <span>•</span>
+        <span>Pos = posisi match</span>
+        <span>•</span>
+        <span>Point = placement point</span>
+        <span>•</span>
+        <span>Kill Point = total kill</span>
+    </div>
+</div>
+
+<!-- EDITOR MODAL -->
+<div class="editor-modal" id="editorModal">
+    <div class="editor-panel">
+        <div class="editor-head">
+            <div class="editor-head-left">
+                <div class="editor-head-icon">✏️</div>
+                <div>
+                    <h3>Edit Hasil Pertandingan</h3>
+                    <div class="editor-sub">Ubah data tanpa perlu popup satu per satu.</div>
+                </div>
+            </div>
+            <button class="close-editor" id="closeEditorButton" type="button" aria-label="Tutup">×</button>
+        </div>
+
+        <div class="editor-body">
+            <div class="editor-section">
+                <div class="editor-section-label">
+                    <strong>Nama Team</strong>
+                    <span>Nama akan tampil di leaderboard</span>
+                </div>
+                <div class="team-name-wrap">
+                    <span class="team-name-badge">⌂</span>
+                    <input class="editor-input" id="editTeamName" type="text" placeholder="Nama team">
+                </div>
+            </div>
+
+            <div class="editor-section">
+                <div class="editor-section-label">
+                    <strong>Placement</strong>
+                    <span id="selectedPlacementText">Pilih posisi</span>
+                </div>
+                <div class="placement-grid" id="placementGrid"></div>
+                <input id="editPlacement" type="hidden" value="1">
+            </div>
+
+            <div class="editor-section">
+                <div class="editor-section-label">
+                    <strong>Player & Kill</strong>
+                    <span>Gunakan − / + agar lebih cepat</span>
+                </div>
+
+                <div class="player-editor">
+                    <div class="player-editor-title">
+                        <strong>Daftar Player</strong>
+                        <span>MAKS. 30 KILL / PLAYER</span>
+                    </div>
+                    <div class="player-list" id="editPlayers"></div>
+                </div>
+
+                <div class="editor-summary">
+                    <div class="summary-box">
+                        <span>Placement Point</span>
+                        <strong id="editPlacementPoint">0</strong>
+                    </div>
+                    <div class="summary-box kill">
+                        <span>Kill Point</span>
+                        <strong id="editKillPoint">0</strong>
+                    </div>
+                    <div class="summary-box total">
+                        <span>Total Point</span>
+                        <strong id="editTotalPoint">0</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="editor-footer">
+            <div class="editor-footer-note">Total point dihitung otomatis.</div>
+            <div class="editor-footer-actions">
+                <button class="btn-outline" id="cancelEditButton" type="button">Batal</button>
+                <button class="btn-primary" id="saveEditButton" type="button">✓ Simpan Perubahan</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div
+    class="toast"
+    id="toast"
+></div>
+
+
+<script>
+
+/* =========================================================
+   FFSCORER OCR
+   Scanner khusus screenshot Free Fire
+========================================================= */
+
+
+const PLACEMENT_POINTS = {
+
+    1: 12,
+    2: 9,
+    3: 8,
+    4: 7,
+    5: 6,
+    6: 5,
+    7: 4,
+    8: 3,
+    9: 2,
+    10: 1,
+    11: 0,
+    12: 0
+
+};
+
+
+/*
+    Screenshot referensi Free Fire:
+
+    1600 x 720
+
+    Posisi 1-5  = kiri
+    Posisi 6-10 = kanan
+
+    Kita TIDAK OCR posisi.
+
+    Posisi ditentukan dari lokasi crop.
+*/
+
+
+const REFERENCE_WIDTH = 1600;
+const REFERENCE_HEIGHT = 720;
+
+
+/* ---------------------------------------------------------
+   SCOREBOARD SLOT LAYOUT
+---------------------------------------------------------
+
+   Koordinat di bawah mengikuti screenshot Free Fire asli user (1600 x 720).
+
+   IMPORTANT:
+   Setiap placement punya struktur sendiri.
+
+   Rank 4 hanya punya SATU BARIS:
+       BHS. Vendeta     ABHIS.DKR27
+
+   Jadi scanner TIDAK boleh mengambil baris kedua dari
+   area rank 5 sebagai player rank 4.
+
+   Rank 5 memiliki dua baris:
+       sibocuekk        Pria BPJS
+       My NAnn々        Pria Solo々
+
+   Rank 1-3 dan 6-9 juga memakai dua baris.
+--------------------------------------------------------- */
+
+const POSITION_LAYOUT = {
+
+    // Coordinates are based on the actual 1600x720 Free Fire
+    // scoreboard screenshot supplied by the user.
+    1:{
+        side:"left",
+        rows:[
+            [174,200],
+            [210,236]
+        ]
+    },
+
+    2:{
+        side:"left",
+        rows:[
+            [270,296],
+            [307,333]
+        ]
+    },
+
+    3:{
+        side:"left",
+        rows:[
+            [367,393],
+            [405,431]
+        ]
+    },
+
+    // Rank 4 has ONLY TWO PLAYERS in one row.
+    4:{
+        side:"left",
+        rows:[
+            [478,508]
+        ]
+    },
+
+    5:{
+        side:"left",
+        rows:[
+            [555,583],
+            [592,620]
+        ]
+    },
+
+    6:{
+        side:"right",
+        rows:[
+            [176,202],
+            [211,237]
+        ]
+    },
+
+    7:{
+        side:"right",
+        rows:[
+            [254,281],
+            [288,314]
+        ]
+    },
+
+    8:{
+        side:"right",
+        rows:[
+            [335,362],
+            [368,395]
+        ]
+    },
+
+    9:{
+        side:"right",
+        rows:[
+            [416,443],
+            [449,477]
+        ]
+    },
+
+    10:{
+        side:"right",
+        rows:[
+            [500,527],
+            [533,560]
+        ]
+    }
+
+};
+
+
+/* ---------------------------------------------------------
+   PLAYER NAME / KILL BOXES
+--------------------------------------------------------- */
+
+const NAME_BOXES = {
+
+    /*
+        1600x720 Free Fire scoreboard.
+
+        IMPORTANT:
+        Kolom player kanan pada rank 1-5 bisa panjang,
+        contoh: PBM★JECK09 dan Pria Solo々.
+        Jadi crop diperlebar agar nama tidak terpotong.
+    */
+
+    left:[
+        {
+            x1:315,
+            x2:455
+        },
+        {
+            x1:600,
+            x2:825
+        }
+    ],
+
+    right:[
+        {
+            x1:950,
+            x2:1100
+        },
+        {
+            x1:1160,
+            x2:1345
+        }
+    ]
+
+};
+
+
+const KILL_BOXES = {
+
+    left:[
+        {
+            x1:448,
+            x2:495
+        },
+        {
+            x1:742,
+            x2:790
+        }
+    ],
+
+    right:[
+        {
+            x1:1080,
+            x2:1125
+        },
+        {
+            x1:1300,
+            x2:1345
+        }
+    ]
+
+};
+
+
+/* ---------------------------------------------------------
+   STATE
+--------------------------------------------------------- */
+
+let selectedImage = null;
+let results = [];
+let ocrWorker = null;
+
+
+/* ---------------------------------------------------------
+   ELEMENTS
+--------------------------------------------------------- */
+
+const imageInput =
+    document.getElementById("imageInput");
+
+const uploadBox =
+    document.getElementById("uploadBox");
+
+const uploadContent =
+    document.getElementById("uploadContent");
+
+const previewBox =
+    document.getElementById("previewBox");
+
+const previewImage =
+    document.getElementById("previewImage");
+
+const scanButton =
+    document.getElementById("scanButton");
+
+const removeButton =
+    document.getElementById("removeButton");
+
+const progressWrap =
+    document.getElementById("progressWrap");
+
+const progressBar =
+    document.getElementById("progressBar");
+
+const progressText =
+    document.getElementById("progressText");
+
+const progressPercent =
+    document.getElementById("progressPercent");
+
+const scanStatus =
+    document.getElementById("scanStatus");
+
+const resultBody =
+    document.getElementById("resultBody");
+
+const confirmArea =
+    document.getElementById("confirmArea");
+
+const confirmButton =
+    document.getElementById("confirmButton");
+
+const rescanButton =
+    document.getElementById("rescanButton");
+
+const debugCard =
+    document.getElementById("debugCard");
+
+const debugResult =
+    document.getElementById("debugResult");
+
+const ocrConfidence =
+    document.getElementById("ocrConfidence");
+
+const resultStatus =
+    document.getElementById("resultStatus");
+
+const resultStatusText =
+    document.getElementById("resultStatusText");
+
+const toast =
+    document.getElementById("toast");
+
+
+/* ---------------------------------------------------------
+   UPLOAD
+--------------------------------------------------------- */
+
+imageInput.addEventListener(
+    "change",
+    function(){
+
+        const file = this.files[0];
+
+        if(!file) return;
+
+        loadImage(file);
+
+    }
+);
+
+
+uploadBox.addEventListener(
+    "dragover",
+    function(e){
+
+        e.preventDefault();
+
+        uploadBox.classList.add("drag");
+
+    }
+);
+
+
+uploadBox.addEventListener(
+    "dragleave",
+    function(){
+
+        uploadBox.classList.remove("drag");
+
+    }
+);
+
+
+uploadBox.addEventListener(
+    "drop",
+    function(e){
+
+        e.preventDefault();
+
+        uploadBox.classList.remove("drag");
+
+        const file =
+            e.dataTransfer.files[0];
+
+        if(!file) return;
+
+        if(!file.type.startsWith("image/")){
+
+            showToast(
+                "File harus berupa gambar.",
+                true
+            );
+
+            return;
+
+        }
+
+        loadImage(file);
+
+    }
+);
+
+
+function loadImage(file){
+
+    selectedImage = file;
+
+    const url =
+        URL.createObjectURL(file);
+
+    previewImage.src = url;
+
+    uploadContent.style.display = "none";
+
+    uploadBox.style.display = "none";
+
+    previewBox.style.display = "block";
+
+    resultBody.innerHTML = `
+        <tr>
+            <td colspan="7" class="empty">
+                Screenshot siap discan.
+            </td>
+        </tr>
+    `;
+
+    confirmArea.style.display = "none";
+
+    debugCard.style.display = "none";
+
+}
+
+
+/* ---------------------------------------------------------
+   REMOVE
+--------------------------------------------------------- */
+
+removeButton.addEventListener(
+    "click",
+    function(){
+
+        selectedImage = null;
+
+        imageInput.value = "";
+
+        previewBox.style.display = "none";
+
+        uploadBox.style.display = "flex";
+
+        uploadContent.style.display = "block";
+
+        progressWrap.style.display = "none";
+
+        debugCard.style.display = "none";
+
+        confirmArea.style.display = "none";
+
+        rescanButton.style.display = "none";
+
+        resultBody.innerHTML = `
+            <tr>
+                <td colspan="7" class="empty">
+                    Belum ada hasil scan.
+                </td>
+            </tr>
+        `;
+
+    }
+);
+
+
+/* ---------------------------------------------------------
+   SCAN
+--------------------------------------------------------- */
+
+scanButton.addEventListener(
+    "click",
+    startScan
+);
+
+
+rescanButton.addEventListener(
+    "click",
+    startScan
+);
+
+
+async function startScan(){
+
+    if(!selectedImage){
+
+        showToast(
+            "Upload screenshot terlebih dahulu.",
+            true
+        );
+
+        return;
+
+    }
+
+    try{
+
+        scanButton.disabled = true;
+
+        rescanButton.disabled = true;
+
+        progressWrap.style.display = "block";
+
+        setProgress(
+            2,
+            "Membaca screenshot..."
+        );
+
+
+        const image =
+            await loadImageElement(
+                selectedImage
+            );
+
+
+        /*
+            Validasi aspect ratio.
+
+            Screenshot FF asli biasanya
+            sekitar 1600 x 720.
+        */
+
+        const ratio =
+            image.width / image.height;
+
+        if(
+            ratio < 1.9 ||
+            ratio > 2.35
+        ){
+
+            showToast(
+                "Screenshot terlihat bukan format scoreboard Free Fire 16:7. Scanner tetap mencoba.",
+                false
+            );
+
+        }
+
+
+        setProgress(
+            5,
+            "Menyiapkan OCR..."
+        );
+
+
+        await createOCRWorker();
+
+
+        /*
+            Kita tidak scan seluruh screenshot.
+
+            Kita langsung scan slot player.
+        */
+
+        const scanResult =
+            await scanFreeFireBoard(
+                image
+            );
+
+
+        results =
+            buildTeamResults(
+                scanResult
+            );
+
+
+        setProgress(
+            100,
+            "Scan selesai."
+        );
+
+
+        renderResults();
+
+
+        debugCard.style.display = "block";
+
+        debugResult.textContent =
+            createDebugText(
+                scanResult
+            ) +
+            "\n\nKILL OCR: digit-only crop + multi-variant voting";
+
+
+        ocrConfidence.textContent =
+            `${scanResult.confidence}%`;
+
+
+        resultStatus.style.display =
+            "flex";
+
+        resultStatusText.textContent =
+            `${results.length} team berhasil dibaca`;
+
+
+        confirmArea.style.display =
+            results.length
+                ? "flex"
+                : "none";
+
+
+        rescanButton.style.display =
+            "block";
+
+
+    }catch(error){
+
+        console.error(error);
+
+        showToast(
+            "OCR gagal: " + error.message,
+            true
+        );
+
+    }finally{
+
+        scanButton.disabled = false;
+
+        rescanButton.disabled = false;
+
+    }
+
+}
+
+
+/* ---------------------------------------------------------
+   CREATE TESSERACT WORKER
+--------------------------------------------------------- */
+
+async function createOCRWorker(){
+
+    if(ocrWorker){
+
+        return;
+
+    }
+
+
+    ocrWorker =
+        await Tesseract.createWorker(
+            "eng",
+            1,
+            {
+
+                logger:
+                function(message){
+
+                    if(
+                        message.status ===
+                        "recognizing text"
+                    ){
+
+                        const percent =
+                            Math.round(
+                                message.progress * 100
+                            );
+
+                        setProgress(
+                            Math.min(
+                                15 + percent * .2,
+                                35
+                            ),
+                            "Menyiapkan OCR..."
+                        );
+
+                    }
+
+                }
+
+            }
+        );
+
+}
+
+
+/* ---------------------------------------------------------
+   MAIN FREE FIRE SCANNER
+--------------------------------------------------------- */
+
+async function scanFreeFireBoard(image){
+
+    const canvas =
+        document.createElement("canvas");
+
+    canvas.width =
+        image.width;
+
+    canvas.height =
+        image.height;
+
+    const ctx =
+        canvas.getContext("2d");
+
+    ctx.drawImage(
+        image,
+        0,
+        0
+    );
+
+
+    const scaleX =
+        image.width /
+        REFERENCE_WIDTH;
+
+    const scaleY =
+        image.height /
+        REFERENCE_HEIGHT;
+
+
+    const scannedPlayers = [];
+
+    let totalConfidence = 0;
+
+    let confidenceCount = 0;
+
+
+    /*
+        10 placement
+    */
+
+    for(
+        let position = 1;
+        position <= 10;
+        position++
+    ){
+
+        const layout =
+            POSITION_LAYOUT[position];
+
+        /*
+            Screenshot pendek tidak memiliki rank 10.
+            Jangan pernah OCR area di bawah scoreboard karena
+            bisa terbaca sebagai nama/player palsu.
+        */
+        const maxReferenceY =
+            image.height / scaleY;
+
+        if(
+            !layout ||
+            layout.rows.every(
+                row => row[0] >= maxReferenceY - 5
+            )
+        ){
+            continue;
+        }
+
+
+        /*
+            maksimal 2 kolom,
+            jumlah baris mengikuti layout rank.
+        */
+
+        for(
+            let row = 0;
+            row < layout.rows.length;
+            row++
+        ){
+
+            const y1 =
+                layout.rows[row][0];
+
+            const y2 =
+                layout.rows[row][1];
+
+
+            for(
+                let col = 0;
+                col < 2;
+                col++
+            ){
+
+                const nameBox =
+                    NAME_BOXES[
+                        layout.side
+                    ][col];
+
+
+                const killBox =
+                    KILL_BOXES[
+                        layout.side
+                    ][col];
+
+
+                const nameCrop =
+                    cropScaled(
+                        canvas,
+                        nameBox.x1,
+                        y1,
+                        nameBox.x2,
+                        y2,
+                        scaleX,
+                        scaleY
+                    );
+
+
+                const killCrop =
+                    cropScaled(
+                        canvas,
+                        killBox.x1,
+                        y1,
+                        killBox.x2,
+                        y2,
+                        scaleX,
+                        scaleY
+                    );
+
+
+                /*
+                    Jangan OCR slot kosong.
+                    Ini penting untuk rank seperti #4 yang hanya
+                    mempunyai dua player.
+                */
+
+                if(
+                    !isLikelyPlayerSlot(
+                        nameCrop,
+                        killCrop
+                    )
+                ){
+                    continue;
+                }
+
+
+                /*
+                    OCR NAMA
+                */
+
+                const nameResult =
+                    await recognizePlayerName(
+                        nameCrop
+                    );
+
+
+                /*
+                    OCR KILL
+                */
+
+                const killResult =
+                    await recognizeKill(
+                        killCrop
+                    );
+
+
+                let name =
+                    cleanPlayerName(
+                        nameResult.text
+                    );
+
+
+                let kill =
+                    parseKill(
+                        killResult.text
+                    );
+
+
+                /*
+                    Abaikan slot kosong
+                */
+
+                if(
+                    !name ||
+                    name.length < 2
+                ){
+
+                    continue;
+
+                }
+
+
+                /*
+                    Kalau OCR hanya membaca
+                    simbol atau angka,
+                    anggap kosong.
+                */
+
+                if(
+                    /^[^a-zA-Z]+$/.test(name)
+                ){
+
+                    continue;
+
+                }
+
+
+                /*
+                    Jangan izinkan kill absurd.
+                */
+
+                if(
+                    kill < 0 ||
+                    kill > 30
+                ){
+
+                    kill = 0;
+
+                }
+
+
+                scannedPlayers.push({
+
+                    position,
+
+                    name,
+
+                    kill,
+
+                    confidence:
+                        Math.round(
+                            (
+                                nameResult.confidence +
+                                killResult.confidence
+                            ) / 2
+                        )
+
+                });
+
+
+                totalConfidence +=
+                    (
+                        nameResult.confidence +
+                        killResult.confidence
+                    ) / 2;
+
+                confidenceCount++;
+
+
+                /*
+                    progress
+                */
+
+                const completed =
+                    scannedPlayers.length;
+
+                setProgress(
+                    Math.min(
+                        35 + completed * 1.5,
+                        95
+                    ),
+                    `Scanning player... ${name}`
+                );
+
+            }
+
+        }
+
+    }
+
+
+    /*
+        Hilangkan duplicate.
+    */
+
+    const unique =
+        removeDuplicates(
+            scannedPlayers
+        );
+
+
+    const confidence =
+        confidenceCount
+            ? Math.round(
+                totalConfidence /
+                confidenceCount
+            )
+            : 0;
+
+
+    return {
+
+        players:unique,
+
+        confidence
+
+    };
+
+}
+
+
+/* ---------------------------------------------------------
+   CROP
+--------------------------------------------------------- */
+
+function cropScaled(
+    sourceCanvas,
+    x1,
+    y1,
+    x2,
+    y2,
+    scaleX,
+    scaleY
+){
+
+    const sx =
+        Math.round(x1 * scaleX);
+
+    const sy =
+        Math.round(y1 * scaleY);
+
+    const sw =
+        Math.round(
+            (x2 - x1) * scaleX
+        );
+
+    const sh =
+        Math.round(
+            (y2 - y1) * scaleY
+        );
+
+
+    const crop =
+        document.createElement("canvas");
+
+
+    /*
+        Kita perbesar crop.
+
+        Ini salah satu bagian penting
+        untuk mengatasi nama kecil.
+    */
+
+    const enlargement = 4;
+
+
+    crop.width =
+        sw * enlargement;
+
+    crop.height =
+        sh * enlargement;
+
+
+    const ctx =
+        crop.getContext("2d");
+
+
+    ctx.imageSmoothingEnabled =
+        false;
+
+
+    ctx.drawImage(
+        sourceCanvas,
+
+        sx,
+        sy,
+        sw,
+        sh,
+
+        0,
+        0,
+        crop.width,
+        crop.height
+    );
+
+
+    return crop;
+
+}
+
+
+/* ---------------------------------------------------------
+   PLAYER NAME OCR
+--------------------------------------------------------- */
+
+function hasEnoughTextPixels(canvas){
+
+    const ctx =
+        canvas.getContext("2d");
+
+    if(!ctx){
+        return false;
+    }
+
+    const data =
+        ctx.getImageData(
+            0,
+            0,
+            canvas.width,
+            canvas.height
+        ).data;
+
+    let bright = 0;
+    let yellow = 0;
+
+    for(let i=0;i<data.length;i+=4){
+
+        const r=data[i];
+        const g=data[i+1];
+        const b=data[i+2];
+
+        if(
+            r > 145 &&
+            g > 145 &&
+            b > 145
+        ){
+            bright++;
+        }
+
+        if(
+            r > 150 &&
+            g > 130 &&
+            b < 100
+        ){
+            yellow++;
+        }
+
+    }
+
+    const total =
+        Math.max(1, data.length / 4);
+
+    return (
+        bright / total > 0.012 ||
+        yellow / total > 0.006
+    );
+}
+
+
+/*
+    Validasi player berdasarkan slot.
+    Kalau slot kosong / hanya background, jangan dikirim ke OCR.
+*/
+function isLikelyPlayerSlot(nameCrop, killCrop){
+
+    // Nama player adalah sinyal utama. Kill saja tidak cukup,
+    // karena area kosong dapat mengandung elemen HUD/background.
+    return hasEnoughTextPixels(nameCrop);
+
+}
+
+
+async function recognizePlayerName(canvas){
+
+    /*
+        Kita menggunakan beberapa
+        preprocessing.
+
+        Kemudian pilih hasil terbaik.
+    */
+
+
+    const variants =
+        createNameVariants(
+            canvas
+        );
+
+
+    const candidates = [];
+
+
+    for(
+        const variant of variants
+    ){
+
+        await ocrWorker.setParameters({
+
+            tessedit_pageseg_mode:"7",
+
+            tessedit_char_whitelist:
+                "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789._-|[]()'!*?@#$%^&+-★々"
+
+        });
+
+
+        const result =
+            await ocrWorker.recognize(
+                variant
+            );
+
+
+        const text =
+            result.data.text
+                .trim();
+
+
+        const confidence =
+            Number(
+                result.data.confidence || 0
+            );
+
+
+        if(text){
+
+            candidates.push({
+
+                text,
+
+                confidence
+
+            });
+
+        }
+
+    }
+
+
+    /*
+        Fallback:
+        Kalau semua preprocessing gagal, scan crop asli sekali lagi.
+        Ini membantu nama seperti PBM★JECK09 yang punya simbol.
+    */
+    if(
+        !candidates.length ||
+        Math.max(
+            ...candidates.map(
+                candidate =>
+                    Number(candidate.confidence) || 0
+            )
+        ) < 28
+    ){
+
+        await ocrWorker.setParameters({
+
+            tessedit_pageseg_mode:"7",
+
+            tessedit_char_whitelist:
+                "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789._-|[]()'!*?@#$%^&+-★々 "
+
+        });
+
+        const fallback =
+            await ocrWorker.recognize(
+                canvas
+            );
+
+        const fallbackText =
+            String(
+                fallback.data.text || ""
+            ).trim();
+
+        if(fallbackText){
+
+            candidates.push({
+
+                text:fallbackText,
+
+                confidence:
+                    Number(
+                        fallback.data.confidence || 0
+                    )
+
+            });
+
+        }
+
+    }
+
+    /*
+        Cari kandidat yang paling masuk akal.
+    */
+
+    return chooseBestName(
+        candidates
+    );
+
+}
+
+
+/* ---------------------------------------------------------
+   NAME PREPROCESSING
+--------------------------------------------------------- */
+
+function createNameVariants(canvas){
+
+    const source =
+        canvas.getContext("2d")
+            .getImageData(
+                0,
+                0,
+                canvas.width,
+                canvas.height
+            );
+
+
+    const variants = [];
+
+
+    /*
+        VARIANT 1
+        Grayscale
+    */
+
+    const gray =
+        document.createElement("canvas");
+
+    gray.width =
+        canvas.width;
+
+    gray.height =
+        canvas.height;
+
+
+    const grayCtx =
+        gray.getContext("2d");
+
+    grayCtx.drawImage(
+        canvas,
+        0,
+        0
+    );
+
+
+    const grayData =
+        grayCtx.getImageData(
+            0,
+            0,
+            gray.width,
+            gray.height
+        );
+
+
+    for(
+        let i = 0;
+        i < grayData.data.length;
+        i += 4
+    ){
+
+        const r =
+            grayData.data[i];
+
+        const g =
+            grayData.data[i+1];
+
+        const b =
+            grayData.data[i+2];
+
+
+        const value =
+            0.299*r +
+            0.587*g +
+            0.114*b;
+
+
+        grayData.data[i] =
+        grayData.data[i+1] =
+        grayData.data[i+2] =
+            value;
+
+    }
+
+
+    grayCtx.putImageData(
+        grayData,
+        0,
+        0
+    );
+
+
+    variants.push(gray);
+
+
+    /*
+        VARIANT 2
+        High contrast
+    */
+
+    const contrast =
+        document.createElement("canvas");
+
+    contrast.width =
+        canvas.width;
+
+    contrast.height =
+        canvas.height;
+
+
+    const cctx =
+        contrast.getContext("2d");
+
+    cctx.drawImage(
+        canvas,
+        0,
+        0
+    );
+
+
+    const cdata =
+        cctx.getImageData(
+            0,
+            0,
+            contrast.width,
+            contrast.height
+        );
+
+
+    for(
+        let i = 0;
+        i < cdata.data.length;
+        i += 4
+    ){
+
+        const r =
+            cdata.data[i];
+
+        const g =
+            cdata.data[i+1];
+
+        const b =
+            cdata.data[i+2];
+
+
+        let value =
+            0.299*r +
+            0.587*g +
+            0.114*b;
+
+
+        /*
+            Tingkatkan contrast
+        */
+
+        value =
+            ((value - 128) * 1.8) + 128;
+
+
+        value =
+            Math.max(
+                0,
+                Math.min(
+                    255,
+                    value
+                )
+            );
+
+
+        cdata.data[i] =
+        cdata.data[i+1] =
+        cdata.data[i+2] =
+            value;
+
+    }
+
+
+    cctx.putImageData(
+        cdata,
+        0,
+        0
+    );
+
+
+    variants.push(contrast);
+
+
+    /*
+        VARIANT 3
+        Threshold
+    */
+
+    const threshold =
+        document.createElement("canvas");
+
+    threshold.width =
+        canvas.width;
+
+    threshold.height =
+        canvas.height;
+
+
+    const tctx =
+        threshold.getContext("2d");
+
+    tctx.drawImage(
+        canvas,
+        0,
+        0
+    );
+
+
+    const tdata =
+        tctx.getImageData(
+            0,
+            0,
+            threshold.width,
+            threshold.height
+        );
+
+
+    for(
+        let i = 0;
+        i < tdata.data.length;
+        i += 4
+    ){
+
+        const r =
+            tdata.data[i];
+
+        const g =
+            tdata.data[i+1];
+
+        const b =
+            tdata.data[i+2];
+
+
+        const value =
+            0.299*r +
+            0.587*g +
+            0.114*b;
+
+
+        const finalValue =
+            value > 125
+                ? 255
+                : 0;
+
+
+        tdata.data[i] =
+        tdata.data[i+1] =
+        tdata.data[i+2] =
+            finalValue;
+
+    }
+
+
+    tctx.putImageData(
+        tdata,
+        0,
+        0
+    );
+
+
+    variants.push(threshold);
+
+
+    return variants;
+
+}
+
+
+/* ---------------------------------------------------------
+   BEST NAME
+--------------------------------------------------------- */
+
+function chooseBestName(
+    candidates
+){
+
+    if(!candidates.length){
+
+        return {
+            text:"",
+            confidence:0
+        };
+
+    }
+
+
+    /*
+        Bersihkan kandidat dahulu.
+    */
+
+    const cleaned =
+        candidates.map(
+            item => {
+
+                return {
+
+                    text:
+                        cleanPlayerName(
+                            item.text
+                        ),
+
+                    confidence:
+                        item.confidence
+
+                };
+
+            }
+        )
+        .filter(
+            item =>
+                item.text.length >= 2
+        );
+
+
+    if(!cleaned.length){
+
+        return candidates[0];
+
+    }
+
+
+    /*
+        Jika dua OCR menghasilkan
+        text yang sama / mirip,
+        pilih yang muncul berulang.
+    */
+
+    const groups = [];
+
+
+    for(
+        const item of cleaned
+    ){
+
+        let found = false;
+
+
+        for(
+            const group of groups
+        ){
+
+            if(
+                similarity(
+                    normalizeOCR(
+                        item.text
+                    ),
+                    normalizeOCR(
+                        group.text
+                    )
+                ) >= 0.78
+            ){
+
+                group.items.push(item);
+
+                found = true;
+
+                break;
+
+            }
+
+        }
+
+
+        if(!found){
+
+            groups.push({
+
+                text:item.text,
+
+                items:[item]
+
+            });
+
+        }
+
+    }
+
+
+    groups.sort(
+        (a,b) => {
+
+            const scoreA =
+                a.items.length * 100 +
+                Math.max(
+                    ...a.items.map(
+                        x => x.confidence
+                    )
+                );
+
+            const scoreB =
+                b.items.length * 100 +
+                Math.max(
+                    ...b.items.map(
+                        x => x.confidence
+                    )
+                );
+
+            return scoreB-scoreA;
+
+        }
+    );
+
+
+    const winner =
+        groups[0];
+
+
+    const best =
+        winner.items
+            .sort(
+                (a,b) =>
+                    b.confidence -
+                    a.confidence
+            )[0];
+
+
+    return best;
+
+}
+
+
+/* ---------------------------------------------------------
+   KILL OCR
+--------------------------------------------------------- */
+
+async function recognizeKill(canvas){
+
+    /*
+        KILL OCR:
+        Crop sudah dibuat khusus angka saja.
+
+        Kita pakai PSM 10 (single character) karena setiap
+        crop seharusnya hanya berisi angka kill.
+    */
+
+    const variants =
+        createKillVariants(canvas);
+
+    const candidates = [];
+
+    for(const variant of variants){
+
+        for(const psm of ["10","8"]){
+
+            await ocrWorker.setParameters({
+
+                tessedit_pageseg_mode: psm,
+
+                tessedit_char_whitelist:
+                    "0123456789"
+
+            });
+
+            const result =
+                await ocrWorker.recognize(
+                    variant
+                );
+
+            const text =
+                String(result.data.text || "")
+                    .trim();
+
+            const confidence =
+                Number(
+                    result.data.confidence || 0
+                );
+
+            if(text){
+
+                candidates.push({
+                    text,
+                    confidence
+                });
+
+            }
+
+        }
+
+    }
+
+    const ocrChoice =
+        chooseBestKill(
+            candidates
+        );
+
+    /*
+        SHAPE CHECK:
+        Tesseract kadang membaca digit kuning 6 sebagai 5.
+        Karena digit Free Fire punya bentuk yang konsisten,
+        kita cek apakah angka mempunyai lubang (counter).
+
+        6 -> lubang berada di bagian bawah
+        9 -> lubang berada di bagian atas
+        5 -> tidak mempunyai lubang tertutup
+
+        Jadi untuk kasus seperti PBM★JECK09:
+        OCR = 5
+        bentuk = lower counter
+        hasil akhir = 6
+    */
+
+    const shape =
+        analyzeYellowDigit(
+            canvas
+        );
+
+    if(
+        shape &&
+        ocrChoice.text === "5" &&
+        shape.lowerHole &&
+        !shape.upperHole
+    ){
+
+        return {
+            text:"6",
+            confidence:Math.max(
+                Number(ocrChoice.confidence) || 0,
+                90
+            )
+        };
+
+    }
+
+    if(
+        shape &&
+        ocrChoice.text === "9" &&
+        shape.lowerHole &&
+        !shape.upperHole
+    ){
+
+        return {
+            text:"6",
+            confidence:Math.max(
+                Number(ocrChoice.confidence) || 0,
+                88
+            )
+        };
+
+    }
+
+    return ocrChoice;
+
+}
+
+
+/* ---------------------------------------------------------
+   KILL PREPROCESSING
+--------------------------------------------------------- */
+
+function createKillVariants(canvas){
+
+    const variants = [];
+
+    /*
+        Variant A:
+        Grayscale + strong contrast.
+    */
+
+    const gray =
+        document.createElement("canvas");
+
+    gray.width = canvas.width;
+    gray.height = canvas.height;
+
+    const gctx =
+        gray.getContext("2d");
+
+    gctx.drawImage(
+        canvas,
+        0,
+        0
+    );
+
+    const gd =
+        gctx.getImageData(
+            0,
+            0,
+            gray.width,
+            gray.height
+        );
+
+    for(
+        let i = 0;
+        i < gd.data.length;
+        i += 4
+    ){
+
+        const r = gd.data[i];
+        const g = gd.data[i + 1];
+        const b = gd.data[i + 2];
+
+        let value =
+            0.299 * r +
+            0.587 * g +
+            0.114 * b;
+
+        value =
+            ((value - 110) * 2.2) + 128;
+
+        value =
+            Math.max(
+                0,
+                Math.min(255, value)
+            );
+
+        gd.data[i] =
+        gd.data[i + 1] =
+        gd.data[i + 2] =
+            value;
+
+        gd.data[i + 3] = 255;
+
+    }
+
+    gctx.putImageData(gd, 0, 0);
+
+    variants.push(gray);
+
+
+    /*
+        Variant B:
+        Yellow digit mask.
+
+        Free Fire kill number berwarna kuning,
+        sedangkan background gelap.
+    */
+
+    const yellow =
+        document.createElement("canvas");
+
+    yellow.width = canvas.width;
+    yellow.height = canvas.height;
+
+    const yctx =
+        yellow.getContext("2d");
+
+    const source =
+        canvas.getContext("2d")
+            .getImageData(
+                0,
+                0,
+                canvas.width,
+                canvas.height
+            );
+
+    const yd =
+        yctx.createImageData(
+            canvas.width,
+            canvas.height
+        );
+
+    for(
+        let i = 0;
+        i < source.data.length;
+        i += 4
+    ){
+
+        const r = source.data[i];
+        const g = source.data[i + 1];
+        const b = source.data[i + 2];
+
+        /*
+            Lebih longgar daripada mask lama supaya
+            angka kuning tidak hilang karena brightness.
+        */
+
+        const isYellow =
+            r > 115 &&
+            g > 90 &&
+            b < 145 &&
+            r > b * 1.18 &&
+            g > b * 1.08;
+
+        const value =
+            isYellow ? 255 : 0;
+
+        yd.data[i] =
+        yd.data[i + 1] =
+        yd.data[i + 2] =
+            value;
+
+        yd.data[i + 3] = 255;
+
+    }
+
+    yctx.putImageData(
+        yd,
+        0,
+        0
+    );
+
+    variants.push(yellow);
+
+
+    /*
+        Variant C:
+        Hanya mempertahankan pixel kuning yang kuat.
+        Ini membantu membedakan 9 / 7 / 2 dari background.
+    */
+
+    const strongYellow =
+        document.createElement("canvas");
+
+    strongYellow.width =
+        canvas.width;
+
+    strongYellow.height =
+        canvas.height;
+
+    const sctx =
+        strongYellow.getContext("2d");
+
+    const sd =
+        sctx.createImageData(
+            canvas.width,
+            canvas.height
+        );
+
+    for(
+        let i = 0;
+        i < source.data.length;
+        i += 4
+    ){
+
+        const r = source.data[i];
+        const g = source.data[i + 1];
+        const b = source.data[i + 2];
+
+        const isStrongYellow =
+            r > 145 &&
+            g > 115 &&
+            b < 110 &&
+            r - b > 55 &&
+            g - b > 35;
+
+        const value =
+            isStrongYellow ? 255 : 0;
+
+        sd.data[i] =
+        sd.data[i + 1] =
+        sd.data[i + 2] =
+            value;
+
+        sd.data[i + 3] = 255;
+
+    }
+
+    sctx.putImageData(
+        sd,
+        0,
+        0
+    );
+
+    variants.push(strongYellow);
+
+
+    return variants;
+
+}
+
+
+/* ---------------------------------------------------------
+   BEST KILL
+--------------------------------------------------------- */
+
+function analyzeYellowDigit(canvas){
+
+    try{
+
+        const ctx =
+            canvas.getContext("2d");
+
+        const source =
+            ctx.getImageData(
+                0,
+                0,
+                canvas.width,
+                canvas.height
+            );
+
+        const mask =
+            new Uint8Array(
+                canvas.width *
+                canvas.height
+            );
+
+        let minX = canvas.width;
+        let minY = canvas.height;
+        let maxX = -1;
+        let maxY = -1;
+
+        for(
+            let y = 0;
+            y < canvas.height;
+            y++
+        ){
+
+            for(
+                let x = 0;
+                x < canvas.width;
+                x++
+            ){
+
+                const i =
+                    (
+                        y *
+                        canvas.width +
+                        x
+                    ) * 4;
+
+                const r =
+                    source.data[i];
+
+                const g =
+                    source.data[i + 1];
+
+                const b =
+                    source.data[i + 2];
+
+                /*
+                    Yellow Free Fire digit.
+                    Dibuat cukup ketat supaya tulisan "Kill"
+                    yang berwarna putih tidak ikut.
+                */
+
+                const yellow =
+                    r > 125 &&
+                    g > 95 &&
+                    b < 145 &&
+                    r > b * 1.15 &&
+                    g > b * 1.05;
+
+                if(yellow){
+
+                    mask[
+                        y *
+                        canvas.width +
+                        x
+                    ] = 1;
+
+                    minX =
+                        Math.min(
+                            minX,
+                            x
+                        );
+
+                    minY =
+                        Math.min(
+                            minY,
+                            y
+                        );
+
+                    maxX =
+                        Math.max(
+                            maxX,
+                            x
+                        );
+
+                    maxY =
+                        Math.max(
+                            maxY,
+                            y
+                        );
+
+                }
+
+            }
+
+        }
+
+        if(
+            maxX < minX ||
+            maxY < minY
+        ){
+            return null;
+        }
+
+        const width =
+            maxX - minX + 1;
+
+        const height =
+            maxY - minY + 1;
+
+        /*
+            Digit kill biasanya kecil.
+            Abaikan kalau area yang ditemukan terlalu besar,
+            karena berarti background ikut termask.
+        */
+
+        if(
+            width < 4 ||
+            height < 8 ||
+            width > 35 ||
+            height > 35
+        ){
+            return null;
+        }
+
+        /*
+            Flood-fill background di dalam bounding box.
+            Area hitam yang TIDAK terhubung ke tepi adalah hole.
+        */
+
+        const bw =
+            width + 2;
+
+        const bh =
+            height + 2;
+
+        const inside =
+            new Uint8Array(
+                bw * bh
+            );
+
+        for(
+            let y = 0;
+            y < height;
+            y++
+        ){
+
+            for(
+                let x = 0;
+                x < width;
+                x++
+            ){
+
+                inside[
+                    (y + 1) *
+                    bw +
+                    (x + 1)
+                ] =
+                    mask[
+                        (minY + y) *
+                        canvas.width +
+                        (minX + x)
+                    ];
+
+            }
+
+        }
+
+        /*
+            Mark background connected to the outside.
+        */
+
+        const outside =
+            new Uint8Array(
+                bw * bh
+            );
+
+        const queue = [];
+
+        function pushIfBackground(x,y){
+
+            if(
+                x < 0 ||
+                y < 0 ||
+                x >= bw ||
+                y >= bh
+            ){
+                return;
+            }
+
+            const index =
+                y * bw + x;
+
+            if(
+                outside[index] ||
+                inside[index]
+            ){
+                return;
+            }
+
+            outside[index] = 1;
+
+            queue.push(
+                [x,y]
+            );
+
+        }
+
+        for(
+            let x = 0;
+            x < bw;
+            x++
+        ){
+
+            pushIfBackground(x,0);
+            pushIfBackground(x,bh-1);
+
+        }
+
+        for(
+            let y = 0;
+            y < bh;
+            y++
+        ){
+
+            pushIfBackground(0,y);
+            pushIfBackground(bw-1,y);
+
+        }
+
+        let head = 0;
+
+        while(
+            head < queue.length
+        ){
+
+            const [
+                x,
+                y
+            ] =
+                queue[head++];
+
+            pushIfBackground(x+1,y);
+            pushIfBackground(x-1,y);
+            pushIfBackground(x,y+1);
+            pushIfBackground(x,y-1);
+
+        }
+
+        let holeCount = 0;
+
+        let lowerHole = false;
+        let upperHole = false;
+
+        for(
+            let y = 1;
+            y < bh - 1;
+            y++
+        ){
+
+            for(
+                let x = 1;
+                x < bw - 1;
+                x++
+            ){
+
+                const index =
+                    y * bw + x;
+
+                if(
+                    inside[index] ||
+                    outside[index]
+                ){
+                    continue;
+                }
+
+                /*
+                    Found an enclosed dark pixel.
+                    Determine whether its center is in the
+                    upper or lower half of the digit.
+                */
+
+                holeCount++;
+
+                const relativeY =
+                    (y - 1) /
+                    Math.max(
+                        1,
+                        height
+                    );
+
+                if(
+                    relativeY > 0.48
+                ){
+                    lowerHole = true;
+                }
+
+                if(
+                    relativeY < 0.52
+                ){
+                    upperHole = true;
+                }
+
+            }
+
+        }
+
+        return {
+            holeCount,
+            lowerHole,
+            upperHole,
+            width,
+            height
+        };
+
+    }catch(error){
+
+        return null;
+
+    }
+
+}
+
+
+function chooseBestKill(
+    candidates
+){
+
+    if(!candidates.length){
+
+        return {
+            text:"0",
+            confidence:0
+        };
+
+    }
+
+    const valid = [];
+
+    candidates.forEach(item => {
+
+        const raw =
+            String(item.text || "")
+                .replace(/\s/g, "");
+
+        /*
+            Cari angka pertama.
+            Karena crop sekarang digit-only,
+            hasil idealnya hanya "9", "2", dst.
+        */
+
+        const match =
+            raw.match(/\d{1,2}/);
+
+        if(!match){
+            return;
+        }
+
+        const value =
+            Number(match[0]);
+
+        if(
+            Number.isInteger(value) &&
+            value >= 0 &&
+            value <= 30
+        ){
+
+            valid.push({
+                value,
+                confidence:
+                    Number(item.confidence) || 0
+            });
+
+        }
+
+    });
+
+    if(!valid.length){
+
+        return {
+            text:"0",
+            confidence:0
+        };
+
+    }
+
+    /*
+        Jika beberapa preprocessing menghasilkan angka
+        yang sama, gabungkan confidence-nya.
+    */
+
+    const groups = new Map();
+
+    valid.forEach(item => {
+
+        if(!groups.has(item.value)){
+            groups.set(
+                item.value,
+                {
+                    value:item.value,
+                    count:0,
+                    confidenceSum:0,
+                    bestConfidence:0
+                }
+            );
+        }
+
+        const group =
+            groups.get(item.value);
+
+        group.count++;
+        group.confidenceSum +=
+            item.confidence;
+
+        group.bestConfidence =
+            Math.max(
+                group.bestConfidence,
+                item.confidence
+            );
+
+    });
+
+    const ranked =
+        [...groups.values()]
+            .sort(
+                (a,b) => {
+
+                    /*
+                        Jumlah variant yang setuju lebih penting
+                        daripada satu OCR confidence tinggi.
+
+                        Contoh:
+                        9 ditemukan 3x
+                        7 ditemukan 1x
+
+                        pilih 9.
+                    */
+
+                    if(a.count !== b.count){
+                        return b.count - a.count;
+                    }
+
+                    if(a.confidenceSum !== b.confidenceSum){
+                        return b.confidenceSum -
+                               a.confidenceSum;
+                    }
+
+                    return b.bestConfidence -
+                           a.bestConfidence;
+
+                }
+            );
+
+    const best =
+        ranked[0];
+
+    return {
+        text:String(best.value),
+        confidence:Math.round(
+            best.confidenceSum /
+            Math.max(1, best.count)
+        )
+    };
+
+}
+
+
+/* ---------------------------------------------------------
+   CLEAN NAME
+--------------------------------------------------------- */
+
+function cleanPlayerName(
+    text
+){
+
+    if(!text) return "";
+
+
+    let name =
+        text
+            .replace(/\n/g," ")
+            .replace(/\s+/g," ")
+            .trim();
+
+
+    /*
+        OCR sering menambahkan
+        angka dari area sebelahnya.
+
+        Contoh:
+
+        4G Keyzz 4
+        menjadi
+
+        4G Keyzz
+    */
+
+    name =
+        name.replace(
+            /\s+[0-9]{1,2}\s*$/,
+            ""
+        );
+
+
+    /*
+        Hilangkan Kill kalau somehow
+        ikut terbaca.
+    */
+
+    name =
+        name.replace(
+            /\s*kill\s*/gi,
+            " "
+        );
+
+
+    /*
+        Hilangkan garis random di ujung.
+    */
+
+    name =
+        name.replace(
+            /[\|\~]+$/g,
+            ""
+        )
+        .trim();
+
+
+    return name;
+
+}
+
+
+/* ---------------------------------------------------------
+   PARSE KILL
+--------------------------------------------------------- */
+
+function parseKill(
+    text
+){
+
+    if(!text){
+
+        return 0;
+
+    }
+
+
+    const match =
+        text.match(
+            /\d{1,2}/
+        );
+
+
+    if(!match){
+
+        return 0;
+
+    }
+
+
+    const value =
+        Number(
+            match[0]
+        );
+
+
+    if(
+        value < 0 ||
+        value > 30
+    ){
+
+        return 0;
+
+    }
+
+
+    return value;
+
+}
+
+
+/* ---------------------------------------------------------
+   REMOVE DUPLICATES
+--------------------------------------------------------- */
+
+function removeDuplicates(
+    players
+){
+
+    const map =
+        new Map();
+
+
+    for(
+        const player of players
+    ){
+
+        const key =
+            `${player.position}|${normalizeOCR(player.name)}`;
+
+
+        if(
+            !map.has(key)
+        ){
+
+            map.set(
+                key,
+                player
+            );
+
+        }
+
+    }
+
+
+    return Array.from(
+        map.values()
+    );
+
+}
+
+
+/* ---------------------------------------------------------
+   BUILD TEAM
+--------------------------------------------------------- */
+
+function buildTeamResults(
+    scan
+){
+
+    const byPosition =
+        new Map();
+
+
+    /*
+        Semua player pada position
+        yang sama dianggap satu team.
+
+        Contoh:
+
+        Position 3
+
+        ipos.Reyyy
+        asyraaaa
+        masboy
+        -prjncespii
+
+        = 1 team.
+    */
+
+
+    for(
+        const player of scan.players
+    ){
+
+        if(
+            !byPosition.has(
+                player.position
+            )
+        ){
+
+            byPosition.set(
+                player.position,
+                []
+            );
+
+        }
+
+
+        byPosition
+            .get(player.position)
+            .push(player);
+
+    }
+
+
+    const teams = [];
+
+
+    for(
+        const [position,players]
+        of byPosition
+    ){
+
+        /*
+            Urutkan berdasarkan
+            lokasi/scan order.
+        */
+
+        players.sort(
+            (a,b) =>
+                a.position -
+                b.position
+        );
+
+
+        /*
+            Tentukan nama team.
+
+            Prioritas:
+
+            1. tag sebelum titik
+            2. tag sebelum -
+            3. tag sebelum |
+            4. kata pertama
+        */
+
+        const team =
+            detectTeamName(
+                players
+            );
+
+
+        const totalKill =
+            players.reduce(
+                (
+                    total,
+                    player
+                ) =>
+                    total +
+                    player.kill,
+                0
+            );
+
+
+        const placementPoint =
+            PLACEMENT_POINTS[
+                position
+            ] || 0;
+
+
+        teams.push({
+
+            position,
+
+            team,
+
+            players,
+
+            placement:
+                placementPoint,
+
+            kill:
+                totalKill,
+
+            killPoint:
+                totalKill,
+
+            total:
+                placementPoint +
+                totalKill
+
+        });
+
+    }
+
+
+    teams.sort(
+        (a,b) =>
+            a.position -
+            b.position
+    );
+
+
+    return teams;
+
+}
+
+
+/* ---------------------------------------------------------
+   TEAM NAME
+--------------------------------------------------------- */
+
+function detectTeamName(
+    players
+){
+
+    if(!players.length){
+
+        return "UNKNOWN";
+
+    }
+
+
+    /*
+        Cari player yang paling
+        jelas memiliki team tag.
+    */
+
+    for(
+        const player of players
+    ){
+
+        const name =
+            player.name.trim();
+
+
+        /*
+            Contoh:
+
+            BHS. Vendeta
+            4G Keyzz
+            ipos.Reyyy
+            BOOM MROS
+            APL-dewaRor
+            SE D!nzzp
+        */
+
+
+        const dot =
+            name.match(
+                /^([A-Za-z0-9]{2,8})\./
+            );
+
+
+        if(dot){
+
+            return normalizeTeam(
+                dot[1]
+            );
+
+        }
+
+
+        const hyphen =
+            name.match(
+                /^([A-Za-z0-9]{2,8})[-]/
+            );
+
+
+        if(hyphen){
+
+            return normalizeTeam(
+                hyphen[1]
+            );
+
+        }
+
+
+        const space =
+            name.match(
+                /^([A-Za-z0-9]{2,8})\s+/
+            );
+
+
+        if(space){
+
+            const candidate =
+                space[1];
+
+
+            /*
+                Jangan anggap kata biasa
+                sebagai team.
+
+                Team tag biasanya pendek.
+            */
+
+            if(
+                candidate.length <= 6
+            ){
+
+                return normalizeTeam(
+                    candidate
+                );
+
+            }
+
+        }
+
+
+        const pipe =
+            name.match(
+                /^([A-Za-z0-9]{2,8})\s*\|/
+            );
+
+
+        if(pipe){
+
+            return normalizeTeam(
+                pipe[1]
+            );
+
+        }
+
+    }
+
+
+    /*
+        Kalau tidak ditemukan tag,
+        gunakan nama player pertama.
+    */
+
+    return normalizeTeam(
+        players[0].name
+    );
+
+}
+
+
+function normalizeTeam(
+    team
+){
+
+    if(!team){
+
+        return "UNKNOWN";
+
+    }
+
+
+    return team
+        .replace(
+            /[^A-Za-z0-9]/g,
+            ""
+        )
+        .toUpperCase();
+
+}
+
+
+/* ---------------------------------------------------------
+   RENDER
+--------------------------------------------------------- */
+
+function renderResults(){
+
+    if(!results.length){
+
+        resultBody.innerHTML = `
+            <tr>
+                <td colspan="7" class="empty">
+                    Tidak ada player yang berhasil dikenali.
+                    <br><br>
+                    Pastikan screenshot adalah hasil match
+                    Free Fire asli.
+                </td>
+            </tr>
+        `;
+
+        confirmArea.style.display =
+            "none";
+
+        return;
+
+    }
+
+
+    resultBody.innerHTML =
+        results
+            .map(
+                (team,index) => {
+
+                    const players =
+                        team.players
+                            .map(
+                                (
+                                    player,
+                                    playerIndex
+                                ) => {
+
+                                    return `
+                                        <div
+                                            class="player"
+                                        >
+                                            ${escapeHTML(
+                                                player.name
+                                            )}
+
+                                            <strong>
+                                                ${player.kill}K
+                                            </strong>
+                                        </div>
+                                    `;
+
+                                }
+                            )
+                            .join("");
+
+
+                    return `
+
+                        <tr>
+
+                            <td>
+
+                                <div class="position">
+                                    #${team.position}
+                                </div>
+
+                            </td>
+
+
+                            <td>
+
+                                <div class="team">
+                                    ${escapeHTML(
+                                        team.team
+                                    )}
+                                </div>
+
+                                <div class="players">
+                                    ${players}
+                                </div>
+
+                            </td>
+
+
+                            <td>
+
+                                <div
+                                    class="placement-point"
+                                >
+                                    ${team.placement}
+                                </div>
+
+                            </td>
+
+
+                            <td>
+
+                                <div
+                                    class="kill-number"
+                                >
+                                    ${team.kill}
+                                </div>
+
+                            </td>
+
+
+                            <td>
+
+                                ${team.killPoint}
+
+                            </td>
+
+
+                            <td>
+
+                                <div class="total">
+                                    ${team.total}
+                                </div>
+
+                            </td>
+
+
+                            <td>
+
+                                <button
+                                    class="edit-btn"
+                                    onclick="editTeam(${index})"
+                                >
+                                    Edit
+                                </button>
+
+                            </td>
+
+                        </tr>
+
+                    `;
+
+                }
+            )
+            .join("");
+
+
+    confirmArea.style.display =
+        "flex";
+
+}
+
+
+/* ---------------------------------------------------------
+   EDIT TEAM - MODERN MODAL
+--------------------------------------------------------- */
+
+let editingTeamIndex = null;
+
+const editorModal = document.getElementById("editorModal");
+const editTeamName = document.getElementById("editTeamName");
+const editPlacement = document.getElementById("editPlacement");
+const editPlayers = document.getElementById("editPlayers");
+const editPlacementPoint = document.getElementById("editPlacementPoint");
+const editKillPoint = document.getElementById("editKillPoint");
+const editTotalPoint = document.getElementById("editTotalPoint");
+const closeEditorButton = document.getElementById("closeEditorButton");
+const cancelEditButton = document.getElementById("cancelEditButton");
+const saveEditButton = document.getElementById("saveEditButton");
+
+function buildPlacementGrid(selected){
+    const grid = document.getElementById("placementGrid");
+    if(!grid) return;
+
+    grid.innerHTML = Object.keys(PLACEMENT_POINTS)
+        .map(Number)
+        .sort((a,b) => a-b)
+        .map(place => `
+            <button
+                type="button"
+                class="placement-option ${place === Number(selected) ? "active" : ""}"
+                data-placement="${place}"
+                onclick="selectPlacement(${place})"
+            >
+                <span class="place-num">#${place}</span>
+                <span class="place-point">${PLACEMENT_POINTS[place] || 0} pts</span>
+            </button>
+        `)
+        .join("");
+}
+
+function selectPlacement(place){
+    const input = document.getElementById("editPlacement");
+    if(!input) return;
+
+    input.value = place;
+
+    document.querySelectorAll(".placement-option").forEach(button => {
+        button.classList.toggle(
+            "active",
+            Number(button.dataset.placement) === Number(place)
+        );
+    });
+
+    const label = document.getElementById("selectedPlacementText");
+    if(label){
+        label.textContent =
+            `Posisi #${place} • ${PLACEMENT_POINTS[place] || 0} placement point`;
+    }
+
+    updateEditorSummary();
+}
+
+function changePlayerKill(index, amount){
+    const input = document.querySelector(
+        `.edit-player-kill[data-index="${index}"]`
+    );
+
+    if(!input) return;
+
+    let value = Number(input.value) || 0;
+    value = Math.max(0, Math.min(30, Math.floor(value + amount)));
+
+    input.value = value;
+    updateEditorSummary();
+}
+
+function updateEditorSummary(){
+    const placement =
+        Math.max(
+            1,
+            Math.min(
+                12,
+                Number(document.getElementById("editPlacement")?.value) || 1
+            )
+        );
+
+    let kill = 0;
+
+    document.querySelectorAll(".edit-player-kill").forEach(input => {
+        const value = Number(input.value);
+        if(Number.isFinite(value)){
+            kill += Math.max(0, Math.min(30, Math.floor(value)));
+        }
+    });
+
+    const placementPoint = PLACEMENT_POINTS[placement] || 0;
+
+    document.getElementById("editPlacementPoint").textContent = placementPoint;
+    document.getElementById("editKillPoint").textContent = kill;
+    document.getElementById("editTotalPoint").textContent =
+        placementPoint + kill;
+}
+
+function editTeam(index){
+    const team = results[index];
+    if(!team) return;
+
+    editingTeamIndex = index;
+
+    const teamNameInput = document.getElementById("editTeamName");
+    const placementInput = document.getElementById("editPlacement");
+    const playersBox = document.getElementById("editPlayers");
+
+    teamNameInput.value = team.team || "";
+    placementInput.value = team.position || 1;
+
+    buildPlacementGrid(team.position || 1);
+
+    const selectedLabel = document.getElementById("selectedPlacementText");
+    if(selectedLabel){
+        const p = Number(team.position || 1);
+        selectedLabel.textContent =
+            `Posisi #${p} • ${PLACEMENT_POINTS[p] || 0} placement point`;
+    }
+
+    playersBox.innerHTML = (team.players || []).map((player, i) => `
+        <div class="player-card">
+            <div class="player-number">${i + 1}</div>
+
+            <input
+                class="editor-input edit-player-name"
+                type="text"
+                data-index="${i}"
+                value="${escapeHTML(player.name || "")}"
+                placeholder="Nama player ${i + 1}"
+            >
+
+            <div class="kill-control">
+                <button
+                    type="button"
+                    class="kill-button"
+                    onclick="changePlayerKill(${i}, -1)"
+                    aria-label="Kurangi kill"
+                >−</button>
+
+                <input
+                    class="editor-input kill-input edit-player-kill"
+                    type="number"
+                    data-index="${i}"
+                    value="${Math.max(0, Math.min(30, Number(player.kill) || 0))}"
+                    min="0"
+                    max="30"
+                    inputmode="numeric"
+                    aria-label="Jumlah kill"
+                >
+
+                <button
+                    type="button"
+                    class="kill-button plus"
+                    onclick="changePlayerKill(${i}, 1)"
+                    aria-label="Tambah kill"
+                >+</button>
+
+                <span class="kill-label">KILL</span>
+            </div>
+        </div>
+    `).join("");
+
+    updateEditorSummary();
+
+    document.getElementById("editorModal").classList.add("show");
+
+    setTimeout(() => {
+        teamNameInput.focus();
+        teamNameInput.select();
+    }, 60);
+}
+
+function closeEditor(){
+    document.getElementById("editorModal").classList.remove("show");
+    editingTeamIndex = null;
+}
+
+document.addEventListener("input", function(e){
+    if(
+        e.target.classList.contains("edit-player-kill")
+    ){
+        let value = Number(e.target.value);
+
+        if(!Number.isFinite(value)){
+            value = 0;
+        }
+
+        value = Math.max(0, Math.min(30, Math.floor(value)));
+        e.target.value = value;
+
+        updateEditorSummary();
+    }
+});
+
+document.getElementById("closeEditorButton").addEventListener("click", closeEditor);
+document.getElementById("cancelEditButton").addEventListener("click", closeEditor);
+
+document.getElementById("editorModal").addEventListener("click", function(e){
+    if(e.target === this){
+        closeEditor();
+    }
+});
+
+document.addEventListener("keydown", function(e){
+    if(
+        e.key === "Escape" &&
+        document.getElementById("editorModal").classList.contains("show")
+    ){
+        closeEditor();
+    }
+});
+
+document.getElementById("saveEditButton").addEventListener("click", function(){
+    if(editingTeamIndex === null) return;
+
+    const team = results[editingTeamIndex];
+    const teamNameInput = document.getElementById("editTeamName");
+    const placementInput = document.getElementById("editPlacement");
+
+    const newTeamName = teamNameInput.value.trim();
+
+    if(!newTeamName){
+        showToast("Nama team tidak boleh kosong.", true);
+        teamNameInput.focus();
+        return;
+    }
+
+    const placement = Math.max(
+        1,
+        Math.min(
+            12,
+            Math.floor(Number(placementInput.value) || 1)
+        )
+    );
+
+    team.team = newTeamName.toUpperCase();
+    team.position = placement;
+
+    const nameInputs =
+        document.querySelectorAll(".edit-player-name");
+
+    const killInputs =
+        document.querySelectorAll(".edit-player-kill");
+
+    team.players.forEach((player, i) => {
+        const name = nameInputs[i]?.value.trim();
+        const kill = Number(killInputs[i]?.value);
+
+        if(name){
+            player.name = name;
+        }
+
+        player.kill = Number.isFinite(kill)
+            ? Math.max(0, Math.min(30, Math.floor(kill)))
+            : 0;
+    });
+
+    team.placement = PLACEMENT_POINTS[placement] || 0;
+
+    team.kill = team.players.reduce(
+        (total, player) => total + player.kill,
+        0
+    );
+
+    team.killPoint = team.kill;
+    team.total = team.placement + team.kill;
+
+    renderResults();
+    closeEditor();
+
+    showToast("Perubahan berhasil diterapkan.", false);
+});
+
+
+
+/* ---------------------------------------------------------
+   SAVE / CONFIRM + SCORE HISTORY
+--------------------------------------------------------- */
+
+const HISTORY_KEY = "ff_match_history";
+const LEADERBOARD_KEY = "ff_leaderboard";
+const LAST_MATCH_KEY = "ff_last_match";
+
+function getMatchHistory(){
+
+    try{
+        return JSON.parse(
+            localStorage.getItem(HISTORY_KEY) || "[]"
+        );
+    }catch(e){
+        return [];
+    }
+
+}
+
+function saveMatchToStorage(matchResults){
+
+    const history = getMatchHistory();
+
+    const match = {
+        id: Date.now(),
+        createdAt: new Date().toISOString(),
+        results: JSON.parse(
+            JSON.stringify(matchResults)
+        )
+    };
+
+    history.unshift(match);
+
+    localStorage.setItem(
+        HISTORY_KEY,
+        JSON.stringify(history)
+    );
+
+    localStorage.setItem(
+        LAST_MATCH_KEY,
+        JSON.stringify(match.results)
+    );
+
+    return match;
+
+}
+
+function addToLeaderboard(matchResults){
+
+    let existing = {};
+
+    try{
+
+        existing = JSON.parse(
+            localStorage.getItem(
+                LEADERBOARD_KEY
+            ) || "{}"
+        );
+
+    }catch(e){
+
+        existing = {};
+
+    }
+
+    matchResults.forEach(team => {
+
+        const teamName = team.team;
+
+        if(!existing[teamName]){
+
+            existing[teamName] = {
+                team: teamName,
+                total: 0,
+                kill: 0,
+                matches: 0
+            };
+
+        }
+
+        existing[teamName].total +=
+            Number(team.total) || 0;
+
+        existing[teamName].kill +=
+            Number(team.kill) || 0;
+
+        existing[teamName].matches += 1;
+
+    });
+
+    localStorage.setItem(
+        LEADERBOARD_KEY,
+        JSON.stringify(existing)
+    );
+
+}
+
+confirmButton.addEventListener(
+    "click",
+    function(){
+
+        if(!results.length){
+            return;
+        }
+
+        saveMatchToStorage(results);
+        addToLeaderboard(results);
+
+        renderHistory();
+
+        showToast(
+            "✓ Hasil pertandingan berhasil disimpan.",
+            false
+        );
+
+        confirmArea.style.display = "none";
+
+    }
+);
+
+function formatDate(dateString){
+
+    const date = new Date(dateString);
+
+    if(Number.isNaN(date.getTime())){
+        return "-";
+    }
+
+    return date.toLocaleString(
+        "id-ID",
+        {
+            day:"2-digit",
+            month:"short",
+            year:"numeric",
+            hour:"2-digit",
+            minute:"2-digit"
+        }
+    );
+
+}
+
+function getMatchTotal(match){
+
+    return match.results.reduce(
+        (sum, team) =>
+            sum + (Number(team.total) || 0),
+        0
+    );
+
+}
+
+function renderHistory(){
+
+    const historyList =
+        document.getElementById("historyList");
+
+    const history =
+        getMatchHistory();
+
+    if(!history.length){
+
+        historyList.innerHTML = `
+            <div class="history-empty">
+                Belum ada riwayat pertandingan.
+            </div>
+        `;
+
+        selectedMergeMatchIds.clear();
+        updateMergeControls();
+        return;
+    }
+
+    // Hanya pertahankan pilihan yang masih ada di riwayat.
+    const validIds = new Set(
+        history.map(match => String(match.id))
+    );
+
+    selectedMergeMatchIds =
+        new Set(
+            [...selectedMergeMatchIds]
+                .filter(id => validIds.has(String(id)))
+        );
+
+    historyList.innerHTML =
+        history.map(
+            (match, index) => {
+
+                const total =
+                    getMatchTotal(match);
+
+                const teamCount =
+                    match.results.length;
+
+                const selected =
+                    selectedMergeMatchIds.has(
+                        String(match.id)
+                    );
+
+                const top3 =
+                    [...match.results]
+                        .sort(
+                            (a, b) =>
+                                (Number(b.total) || 0) -
+                                (Number(a.total) || 0)
+                        )
+                        .slice(0, 3);
+
+                const top3HTML =
+                    top3.map(
+                        (team, rankIndex) => `
+                            <div class="history-rank">
+
+                                <div class="history-rank-head">
+
+                                    <div class="history-rank-number">
+                                        ${rankIndex + 1}
+                                    </div>
+
+                                    <div
+                                        class="history-rank-team"
+                                        title="${escapeHTML(team.team || "-")}"
+                                    >
+                                        ${escapeHTML(team.team || "-")}
+                                    </div>
+
+                                </div>
+
+                                <div class="history-rank-points">
+                                    ${Number(team.total) || 0}
+                                    <small>POINT</small>
+                                </div>
+
+                            </div>
+                        `
+                    )
+                    .join("");
+
+                return `
+                    <div
+                        class="history-item ${selected ? "selected" : ""}"
+                        data-match-id="${String(match.id)}"
+                    >
+
+                        <div class="history-select-wrap">
+                            <input
+                                class="history-select"
+                                type="checkbox"
+                                data-match-id="${String(match.id)}"
+                                ${selected ? "checked" : ""}
+                                aria-label="Pilih Match #${history.length - index}"
+                            >
+                        </div>
+
+                        <div
+                            class="history-main history-select-label"
+                            onclick="toggleMergeMatch('${String(match.id)}')"
+                        >
+                            <div class="history-title">
+                                Match #${history.length - index}
+                            </div>
+
+                            <div class="history-meta">
+                                ${formatDate(match.createdAt)}
+                                • ${teamCount} team
+                            </div>
+                        </div>
+
+                        <div class="history-score">
+                            <div>
+                                Total skor
+                            </div>
+                            <strong>
+                                ${total}
+                            </strong>
+                        </div>
+
+                        <div class="history-actions">
+
+                            <button
+                                class="icon-btn btn-outline"
+                                title="Muat hasil"
+                                onclick="loadHistoryMatch(${index})"
+                            >
+                                ↗
+                            </button>
+
+                            <button
+                                class="icon-btn danger-outline"
+                                title="Hapus match"
+                                onclick="deleteHistoryMatch(${index})"
+                            >
+                                ×
+                            </button>
+
+                        </div>
+
+                        <div class="history-top3">
+                            ${top3HTML}
+                        </div>
+
+                    </div>
+                `;
+
+            }
+        ).join("");
+
+    // Checkbox event.
+    historyList
+        .querySelectorAll(".history-select")
+        .forEach(
+            checkbox => {
+
+                checkbox.addEventListener(
+                    "click",
+                    function(event){
+                        event.stopPropagation();
+                    }
+                );
+
+                checkbox.addEventListener(
+                    "change",
+                    function(){
+
+                        const id =
+                            String(this.dataset.matchId);
+
+                        if(this.checked){
+                            selectedMergeMatchIds.add(id);
+                        }else{
+                            selectedMergeMatchIds.delete(id);
+                        }
+
+                        updateHistorySelectionUI();
+                        updateMergeControls();
+
+                    }
+                );
+
+            }
+        );
+
+    updateHistorySelectionUI();
+    updateMergeControls();
+
+}
+
+
+/* =========================================================
+   MATCH MERGE / TOURNAMENT RESULT
+========================================================= */
+
+const MERGED_RESULT_KEY = "ff_merged_tournament_result";
+
+let selectedMergeMatchIds = new Set();
+
+function normalizeTeamNameForMerge(name){
+    return String(name || "")
+        .normalize("NFKD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .trim()
+        .replace(/\s+/g, " ")
+        .toUpperCase();
+}
+
+function compactTeamName(name){
+    return normalizeTeamNameForMerge(name)
+        .replace(/[^A-Z0-9]/g, "");
+}
+
+function teamNameTokens(name){
+    return normalizeTeamNameForMerge(name)
+        .split(/[^A-Z0-9]+/)
+        .filter(Boolean);
+}
+
+/*
+ * OCR sering membuat nama team sedikit berbeda antar match.
+ * Contoh:
+ *   "46"
+ *   "46 Keyzz"
+ *   "46 KEYZZ 3%"
+ *
+ * Ketiganya harus dianggap sebagai team yang sama.
+ *
+ * Matching dibuat bertahap:
+ * 1. Exact match
+ * 2. Compact exact match
+ * 3. Nama pendek menjadi awalan nama panjang
+ * 4. Token team yang sama
+ * 5. Kemiripan string
+ *
+ * Kita sengaja TIDAK menggabungkan nama yang hanya mirip 1 karakter
+ * supaya team seperti 4G dan 46 tidak ikut tercampur.
+ */
+function getTeamMatchScore(nameA, nameB){
+
+    const a = normalizeTeamNameForMerge(nameA);
+    const b = normalizeTeamNameForMerge(nameB);
+
+    if(!a || !b){
+        return 0;
+    }
+
+    if(a === b){
+        return 100;
+    }
+
+    const ca = compactTeamName(a);
+    const cb = compactTeamName(b);
+
+    if(ca && ca === cb){
+        return 98;
+    }
+
+    // Nama pendek seperti "46" harus bisa mencocokkan
+    // "46 KEYZZ 3%" dari OCR.
+    if(ca.length >= 2 && cb.length >= 2){
+        if(cb.startsWith(ca) || ca.startsWith(cb)){
+            const shorter = Math.min(ca.length, cb.length);
+            if(shorter >= 2){
+                return 92;
+            }
+        }
+    }
+
+    const ta = teamNameTokens(a);
+    const tb = teamNameTokens(b);
+
+    const commonTokens =
+        ta.filter(token => tb.includes(token));
+
+    if(commonTokens.length){
+
+        // Token angka/nama pendek adalah identifier kuat.
+        const strongToken =
+            commonTokens.find(
+                token =>
+                    token.length >= 2 &&
+                    /^[A-Z0-9]+$/.test(token)
+            );
+
+        if(strongToken){
+            return 88;
+        }
+    }
+
+    // Dice coefficient untuk variasi OCR kecil.
+    if(ca.length >= 3 && cb.length >= 3){
+
+        const pairs = new Set();
+
+        for(let i = 0; i < ca.length - 1; i++){
+            pairs.add(ca.slice(i, i + 2));
+        }
+
+        let intersection = 0;
+
+        for(let i = 0; i < cb.length - 1; i++){
+            const pair = cb.slice(i, i + 2);
+            if(pairs.has(pair)){
+                intersection++;
+            }
+        }
+
+        const denominator =
+            Math.max(1, (ca.length - 1) + (cb.length - 1));
+
+        const dice =
+            (2 * intersection) / denominator;
+
+        if(dice >= 0.78){
+            return 82;
+        }
+    }
+
+    return 0;
+}
+
+function findMatchingTeamEntry(teamEntries, teamName){
+
+    let best = null;
+    let bestScore = 0;
+
+    for(const entry of teamEntries){
+
+        const score =
+            getTeamMatchScore(
+                entry.team,
+                teamName
+            );
+
+        if(score > bestScore){
+            bestScore = score;
+            best = entry;
+        }
+
+    }
+
+    return bestScore >= 82
+        ? best
+        : null;
+}
+
+function findTeamRow(rows, teamName){
+
+    let best = null;
+    let bestScore = 0;
+
+    for(const row of rows){
+
+        const score =
+            getTeamMatchScore(
+                row.team,
+                teamName
+            );
+
+        if(score > bestScore){
+            bestScore = score;
+            best = row;
+        }
+
+    }
+
+    return bestScore >= 82
+        ? best
+        : null;
+}
+
+function toggleMergeMatch(matchId){
+
+    const id = String(matchId);
+
+    if(selectedMergeMatchIds.has(id)){
+        selectedMergeMatchIds.delete(id);
+    }else{
+        selectedMergeMatchIds.add(id);
+    }
+
+    updateHistorySelectionUI();
+    updateMergeControls();
+
+}
+
+function updateHistorySelectionUI(){
+
+    document
+        .querySelectorAll(".history-item")
+        .forEach(item => {
+
+            const id =
+                String(item.dataset.matchId);
+
+            const selected =
+                selectedMergeMatchIds.has(id);
+
+            item.classList.toggle(
+                "selected",
+                selected
+            );
+
+            const checkbox =
+                item.querySelector(".history-select");
+
+            if(checkbox){
+                checkbox.checked = selected;
+            }
+
+        });
+
+}
+
+function updateMergeControls(){
+
+    const count =
+        selectedMergeMatchIds.size;
+
+    const countElement =
+        document.getElementById("mergeCount");
+
+    const mergeButton =
+        document.getElementById("mergeMatchesButton");
+
+    if(countElement){
+        countElement.textContent =
+            `${count} dipilih`;
+    }
+
+    if(mergeButton){
+        mergeButton.disabled =
+            count < 2;
+    }
+
+}
+
+function buildMergedLeaderboard(selectedMatches){
+
+    const teams = [];
+
+    selectedMatches.forEach(match => {
+
+        (match.results || []).forEach(team => {
+
+            if(!team.team){
+                return;
+            }
+
+            // Cari team yang sama dari match sebelumnya.
+            // Jangan hanya memakai exact string karena OCR bisa berubah.
+            let row =
+                findTeamRow(
+                    teams,
+                    team.team
+                );
+
+            if(!row){
+
+                row = {
+                    team: team.team,
+                    aliases: [team.team],
+                    placementPoint: 0,
+                    kill: 0,
+                    killPoint: 0,
+                    total: 0,
+                    matches: 0
+                };
+
+                teams.push(row);
+
+            }else{
+
+                // Simpan nama yang pernah muncul.
+                if(
+                    !row.aliases.some(
+                        alias =>
+                            normalizeTeamNameForMerge(alias) ===
+                            normalizeTeamNameForMerge(team.team)
+                    )
+                ){
+                    row.aliases.push(team.team);
+                }
+
+            }
+
+            const position =
+                Number(team.position) || 0;
+
+            const placementPoint =
+                Number(team.placement) ||
+                Number(
+                    PLACEMENT_POINTS[position]
+                ) ||
+                0;
+
+            const kill =
+                Number(team.kill) || 0;
+
+            row.placementPoint +=
+                placementPoint;
+
+            row.kill +=
+                kill;
+
+            row.killPoint +=
+                kill;
+
+            row.total +=
+                placementPoint + kill;
+
+            row.matches += 1;
+
+        });
+
+    });
+
+    return teams
+        .sort(
+            (a,b) =>
+                b.total - a.total ||
+                b.kill - a.kill ||
+                b.placementPoint - a.placementPoint ||
+                a.team.localeCompare(b.team)
+        )
+        .slice(0, 12);
+
+}
+
+function saveMergedResult(selectedMatches, leaderboard){
+
+    const data = {
+        id: Date.now(),
+        createdAt: new Date().toISOString(),
+
+        matchIds: selectedMatches.map(
+            match => String(match.id)
+        ),
+
+        // Simpan snapshot agar detail Match 1, 2, 3
+        // tetap bisa ditampilkan walaupun riwayat berubah.
+        matches: selectedMatches.map(match => ({
+            id: match.id,
+            createdAt: match.createdAt,
+            results: match.results
+        })),
+
+        leaderboard
+    };
+
+    localStorage.setItem(
+        MERGED_RESULT_KEY,
+        JSON.stringify(data)
+    );
+
+    return data;
+
+}
+
+function getSavedMergedResult(){
+
+    try{
+
+        return JSON.parse(
+            localStorage.getItem(
+                MERGED_RESULT_KEY
+            ) || "null"
+        );
+
+    }catch(e){
+
+        return null;
+
+    }
+
+}
+
+function getMatchNumberFromHistory(match, history){
+    const index = history.findIndex(
+        item => String(item.id) === String(match.id)
+    );
+
+    return index >= 0
+        ? history.length - index
+        : null;
+}
+
+function getTeamFromMatch(match, teamName){
+
+    const rows =
+        Array.isArray(match?.results)
+            ? match.results
+            : [];
+
+    // 1. Exact match first.
+    const exact =
+        rows.find(
+            team =>
+                normalizeTeamNameForMerge(team.team) ===
+                normalizeTeamNameForMerge(teamName)
+        );
+
+    if(exact){
+        return exact;
+    }
+
+    // 2. OCR-tolerant matching.
+    let best = null;
+    let bestScore = 0;
+
+    rows.forEach(team => {
+
+        const score =
+            getTeamMatchScore(
+                team.team,
+                teamName
+            );
+
+        if(score > bestScore){
+            bestScore = score;
+            best = team;
+        }
+
+    });
+
+    return bestScore >= 82
+        ? best
+        : null;
+}
+
+function renderMergedResult(data){
+
+    const card =
+        document.getElementById("mergedResultCard");
+
+    const head =
+        document.getElementById("mergedResultHead");
+
+    const body =
+        document.getElementById("mergedResultBody");
+
+    const subtitle =
+        document.getElementById("mergedResultSubtitle");
+
+    if(!card || !head || !body){
+        return;
+    }
+
+    if(
+        !data ||
+        !Array.isArray(data.leaderboard) ||
+        !data.leaderboard.length
+    ){
+        card.style.display = "none";
+        return;
+    }
+
+    const history =
+        getMatchHistory();
+
+    // Ambil snapshot match bila tersedia.
+    // Kalau versi lama belum punya snapshot, ambil dari history.
+    let selectedMatches =
+        Array.isArray(data.matches)
+            ? data.matches
+            : data.matchIds
+                .map(id =>
+                    history.find(
+                        match =>
+                            String(match.id) === String(id)
+                    )
+                )
+                .filter(Boolean);
+
+    if(!selectedMatches.length){
+        card.style.display = "none";
+        return;
+    }
+
+    // Urutkan match sesuai urutan pertandingan.
+    selectedMatches =
+        [...selectedMatches].sort(
+            (a,b) =>
+                (getMatchNumberFromHistory(a, history) || 999) -
+                (getMatchNumberFromHistory(b, history) || 999)
+        );
+
+    const matchNumbers =
+        selectedMatches.map(
+            match =>
+                getMatchNumberFromHistory(match, history)
+                ?? "?"
+        );
+
+    subtitle.textContent =
+        `${matchNumbers.map(n => `Match #${n}`).join("  •  ")}  •  Tournament Result`;
+
+    // Rebuild leaderboard from the actual selected match snapshots.
+    // Ini penting untuk memperbaiki hasil merge lama yang sempat memisahkan
+    // team hanya karena nama OCR berbeda sedikit antar match.
+    const rebuiltLeaderboard =
+        buildMergedLeaderboard(selectedMatches);
+
+    // The leaderboard is ALWAYS rebuilt from the match data.
+    // We never trust an old/stale merged leaderboard.
+    data.leaderboard = rebuiltLeaderboard;
+
+    // Header bertingkat seperti tournament result esports.
+    head.innerHTML = `
+        <tr>
+            <th class="rank-header" rowspan="2">RANK</th>
+            <th class="team-header" rowspan="2">TEAM</th>
+
+            ${selectedMatches.map((match, i) => `
+                <th class="match-group" colspan="3">
+                    MATCH ${matchNumbers[i]}
+                </th>
+            `).join("")}
+
+            <th class="total-group" colspan="4">
+                TOTAL
+            </th>
+        </tr>
+
+        <tr>
+            ${selectedMatches.map(() => `
+                <th>POS</th>
+                <th>KILL</th>
+                <th>POINT</th>
+            `).join("")}
+
+            <th>POS. POINT</th>
+            <th>KILL</th>
+            <th>KILL POINT</th>
+            <th>TOTAL POINT</th>
+        </tr>
+    `;
+
+    body.innerHTML =
+        data.leaderboard
+            .map((team, index) => {
+
+                const rank = index + 1;
+
+                const matchCells =
+                    selectedMatches.map(match => {
+
+                        const result =
+                            getTeamFromMatch(
+                                match,
+                                team.team
+                            );
+
+                        if(!result){
+                            return `
+                                <td>
+                                    <span class="empty-match">—</span>
+                                </td>
+                                <td>
+                                    <span class="empty-match">—</span>
+                                </td>
+                                <td>
+                                    <span class="empty-match">—</span>
+                                </td>
+                            `;
+                        }
+
+                        const position =
+                            Number(
+                                result.position
+                            ) || 0;
+
+                        const kill =
+                            Number(
+                                result.kill
+                            ) || 0;
+
+                        const point =
+                            Number(
+                                result.placement
+                            ) ||
+                            Number(
+                                PLACEMENT_POINTS[position]
+                            ) ||
+                            0;
+
+                        const positionHTML =
+                            position === 1
+                                ? `
+                                    <span class="match-pos boyah">
+                                        BOOYAH!
+                                    </span>
+                                `
+                                : `
+                                    <span class="match-pos">
+                                        #${position}
+                                    </span>
+                                `;
+
+                        return `
+                            <td>
+                                ${positionHTML}
+                            </td>
+
+                            <td>
+                                <span class="match-kill">
+                                    ${kill}
+                                </span>
+                            </td>
+
+                            <td>
+                                <span class="match-point positive">
+                                    +${point}
+                                </span>
+                            </td>
+                        `;
+
+                    }).join("");
+
+                return `
+                    <tr class="rank-${rank}">
+
+                        <td class="rank-cell">
+                            <div class="rank-wrap">
+                                <div class="rank-badge">
+                                    ${rank}
+                                </div>
+                            </div>
+                        </td>
+
+                        <td class="team-cell">
+                            <div class="detailed-team">
+
+                                <span class="detailed-team-dot"></span>
+
+                                <div>
+                                    <div class="detailed-team-name">
+                                        ${escapeHTML(team.team || "-")}
+                                    </div>
+
+                                    <span class="detailed-team-sub">
+                                        ${Number(team.matches) || selectedMatches.length} MATCH
+                                    </span>
+                                </div>
+
+                            </div>
+                        </td>
+
+                        ${matchCells}
+
+                        <td>
+                            <span class="total-pos">
+                                ${Number(team.placementPoint) || 0}
+                            </span>
+                        </td>
+
+                        <td>
+                            <span class="total-kill">
+                                ${Number(team.kill) || 0}
+                            </span>
+                        </td>
+
+                        <td>
+                            <span class="total-kill-point">
+                                ${Number(team.killPoint) || 0}
+                            </span>
+                        </td>
+
+                        <td>
+                            <span class="grand-total">
+                                ${Number(team.total) || 0}
+                            </span>
+                        </td>
+
+                    </tr>
+                `;
+
+            })
+            .join("");
+
+    card.style.display = "block";
+
+    // Simpan hasil grouping yang sudah diperbaiki.
+    try{
+        localStorage.setItem(
+            MERGED_RESULT_KEY,
+            JSON.stringify(data)
+        );
+    }catch(e){}
+
+}
+
+function mergeSelectedMatches(){
+
+    const history =
+        getMatchHistory();
+
+    const selectedMatches =
+        history.filter(
+            match =>
+                selectedMergeMatchIds.has(
+                    String(match.id)
+                )
+        );
+
+    if(selectedMatches.length < 2){
+
+        showToast(
+            "Pilih minimal 2 match untuk digabungkan.",
+            true
+        );
+
+        return;
+
+    }
+
+    // Clone the selected match data so the tournament result
+    // is calculated directly from the saved match results.
+    const matchSnapshots =
+        selectedMatches.map(match => ({
+            id: match.id,
+            createdAt: match.createdAt,
+            results: JSON.parse(
+                JSON.stringify(match.results || [])
+            )
+        }));
+
+    const leaderboard =
+        buildMergedLeaderboard(
+            matchSnapshots
+        );
+
+    const data =
+        saveMergedResult(
+            matchSnapshots,
+            leaderboard
+        );
+
+    renderMergedResult(data);
+
+    showToast(
+        `✓ ${selectedMatches.length} match berhasil digabungkan.`,
+        false
+    );
+
+    document
+        .getElementById("mergedResultCard")
+        ?.scrollIntoView({
+            behavior:"smooth",
+            block:"start"
+        });
+
+}
+
+document
+    .getElementById("mergeMatchesButton")
+    .addEventListener(
+        "click",
+        mergeSelectedMatches
+    );
+
+document
+    .getElementById("selectAllMatchesButton")
+    .addEventListener(
+        "click",
+        function(){
+
+            const history =
+                getMatchHistory();
+
+            if(!history.length){
+                return;
+            }
+
+            const allSelected =
+                history.every(
+                    match =>
+                        selectedMergeMatchIds.has(
+                            String(match.id)
+                        )
+                );
+
+            if(allSelected){
+
+                selectedMergeMatchIds.clear();
+
+                this.textContent =
+                    "Pilih Semua";
+
+            }else{
+
+                history.forEach(
+                    match =>
+                        selectedMergeMatchIds.add(
+                            String(match.id)
+                        )
+                );
+
+                this.textContent =
+                    "Batal Pilih";
+
+            }
+
+            updateHistorySelectionUI();
+            updateMergeControls();
+
+        }
+    );
+
+document
+    .getElementById("rebuildMergedResultButton")
+    .addEventListener(
+        "click",
+        function(){
+
+            const saved =
+                getSavedMergedResult();
+
+            if(!saved){
+                showToast(
+                    "Belum ada hasil gabungan.",
+                    true
+                );
+                return;
+            }
+
+            const history =
+                getMatchHistory();
+
+            const freshMatches =
+                (saved.matchIds || [])
+                    .map(
+                        id =>
+                            history.find(
+                                match =>
+                                    String(match.id) === String(id)
+                            )
+                    )
+                    .filter(Boolean);
+
+            if(freshMatches.length < 2){
+                showToast(
+                    "Match yang digunakan sudah tidak lengkap.",
+                    true
+                );
+                return;
+            }
+
+            const snapshots =
+                freshMatches.map(match => ({
+                    id: match.id,
+                    createdAt: match.createdAt,
+                    results: JSON.parse(
+                        JSON.stringify(match.results || [])
+                    )
+                }));
+
+            const leaderboard =
+                buildMergedLeaderboard(
+                    snapshots
+                );
+
+            const rebuilt = {
+                ...saved,
+                matches: snapshots,
+                matchIds: snapshots.map(
+                    match => String(match.id)
+                ),
+                leaderboard
+            };
+
+            localStorage.setItem(
+                MERGED_RESULT_KEY,
+                JSON.stringify(rebuilt)
+            );
+
+            renderMergedResult(rebuilt);
+
+            showToast(
+                "✓ Tournament Result dihitung ulang dari data match.",
+                false
+            );
+        }
+    );
+
+document
+    .getElementById("clearMergedResultButton")
+    .addEventListener(
+        "click",
+        function(){
+
+            localStorage.removeItem(
+                MERGED_RESULT_KEY
+            );
+
+            renderMergedResult(null);
+
+            showToast(
+                "Hasil gabungan dihapus.",
+                false
+            );
+
+        }
+    );
+
+function loadHistoryMatch(index){
+
+    const history =
+        getMatchHistory();
+
+    const match =
+        history[index];
+
+    if(!match){
+        return;
+    }
+
+    results =
+        JSON.parse(
+            JSON.stringify(match.results)
+        );
+
+    renderResults();
+
+    resultStatus.style.display = "flex";
+
+    resultStatusText.textContent =
+        `Memuat Match #${history.length - index}`;
+
+    confirmArea.style.display = "flex";
+
+    window.scrollTo({
+        top: document.querySelector(".card:nth-of-type(3)")?.offsetTop || 0,
+        behavior:"smooth"
+    });
+
+    showToast(
+        "Hasil match dimuat. Kamu bisa mengeditnya sebelum menyimpan.",
+        false
+    );
+
+}
+
+function deleteHistoryMatch(index){
+
+    const history =
+        getMatchHistory();
+
+    if(!history[index]){
+        return;
+    }
+
+    if(
+        !confirm(
+            "Hapus hasil match ini dari riwayat?"
+        )
+    ){
+        return;
+    }
+
+    history.splice(index, 1);
+
+    localStorage.setItem(
+        HISTORY_KEY,
+        JSON.stringify(history)
+    );
+
+    renderHistory();
+
+    showToast(
+        "Riwayat match dihapus.",
+        false
+    );
+
+}
+
+document.getElementById(
+    "clearHistoryButton"
+).addEventListener(
+    "click",
+    function(){
+
+        const history =
+            getMatchHistory();
+
+        if(!history.length){
+            showToast(
+                "Riwayat masih kosong.",
+                false
+            );
+            return;
+        }
+
+        if(
+            !confirm(
+                "Hapus SEMUA riwayat pertandingan?"
+            )
+        ){
+            return;
+        }
+
+        localStorage.removeItem(
+            HISTORY_KEY
+        );
+
+        localStorage.removeItem(
+            LAST_MATCH_KEY
+        );
+
+        renderHistory();
+
+        showToast(
+            "Semua riwayat berhasil dihapus.",
+            false
+        );
+
+    }
+);
+
+
+
+/* ---------------------------------------------------------
+   DEBUG TEXT
+--------------------------------------------------------- */
+
+function createDebugText(
+    scan
+){
+
+    return scan.players
+        .map(
+            player => {
+
+                return `
+POSITION ${player.position}
+${player.name}    ${player.kill} Kill
+Confidence: ${Math.round(player.confidence)}%
+                `.trim();
+
+            }
+        )
+        .join("\n\n");
+
+}
+
+
+/* ---------------------------------------------------------
+   LOAD IMAGE
+--------------------------------------------------------- */
+
+function loadImageElement(
+    file
+){
+
+    return new Promise(
+        (
+            resolve,
+            reject
+        ) => {
+
+            const image =
+                new Image();
+
+
+            image.onload =
+                () => resolve(
+                    image
+                );
+
+
+            image.onerror =
+                reject;
+
+
+            image.src =
+                URL.createObjectURL(
+                    file
+                );
+
+        }
+    );
+
+}
+
+
+/* ---------------------------------------------------------
+   NORMALIZE OCR
+--------------------------------------------------------- */
+
+function normalizeOCR(
+    text
+){
+
+    return text
+        .toUpperCase()
+        .replace(
+            /[^A-Z0-9]/g,
+            ""
+        );
+
+}
+
+
+/* ---------------------------------------------------------
+   SIMILARITY
+--------------------------------------------------------- */
+
+function similarity(
+    a,
+    b
+){
+
+    if(
+        a === b
+    ){
+
+        return 1;
+
+    }
+
+
+    if(
+        !a.length ||
+        !b.length
+    ){
+
+        return 0;
+
+    }
+
+
+    const matrix =
+        Array.from(
+            {
+                length:
+                    a.length + 1
+            },
+            () =>
+                Array(
+                    b.length + 1
+                ).fill(0)
+        );
+
+
+    for(
+        let i = 0;
+        i <= a.length;
+        i++
+    ){
+
+        matrix[i][0] = i;
+
+    }
+
+
+    for(
+        let j = 0;
+        j <= b.length;
+        j++
+    ){
+
+        matrix[0][j] = j;
+
+    }
+
+
+    for(
+        let i = 1;
+        i <= a.length;
+        i++
+    ){
+
+        for(
+            let j = 1;
+            j <= b.length;
+            j++
+        ){
+
+            const cost =
+                a[i-1] === b[j-1]
+                    ? 0
+                    : 1;
+
+
+            matrix[i][j] =
+                Math.min(
+
+                    matrix[i-1][j] + 1,
+
+                    matrix[i][j-1] + 1,
+
+                    matrix[i-1][j-1] +
+                    cost
+
+                );
+
+        }
+
+    }
+
+
+    const distance =
+        matrix[a.length][b.length];
+
+
+    return 1 -
+        distance /
+        Math.max(
+            a.length,
+            b.length
+        );
+
+}
+
+
+/* ---------------------------------------------------------
+   ESCAPE HTML
+--------------------------------------------------------- */
+
+function escapeHTML(
+    text
+){
+
+    return String(text)
+        .replace(
+            /&/g,
+            "&amp;"
+        )
+        .replace(
+            /</g,
+            "&lt;"
+        )
+        .replace(
+            />/g,
+            "&gt;"
+        )
+        .replace(
+            /"/g,
+            "&quot;"
+        )
+        .replace(
+            /'/g,
+            "&#039;"
+        );
+
+}
+
+
+/* ---------------------------------------------------------
+   PROGRESS
+--------------------------------------------------------- */
+
+function setProgress(
+    percent,
+    text
+){
+
+    percent =
+        Math.max(
+            0,
+            Math.min(
+                100,
+                percent
+            )
+        );
+
+
+    progressBar.style.width =
+        percent + "%";
+
+
+    progressPercent.textContent =
+        Math.round(
+            percent
+        ) + "%";
+
+
+    progressText.textContent =
+        text;
+
+
+    scanStatus.textContent =
+        text;
+
+}
+
+
+/* ---------------------------------------------------------
+   TOAST
+--------------------------------------------------------- */
+
+function showToast(
+    message,
+    error = false
+){
+
+    toast.textContent =
+        message;
+
+
+    toast.className =
+        "toast " +
+        (
+            error
+                ? "error"
+                : "success"
+        );
+
+
+    toast.style.display =
+        "block";
+
+
+    setTimeout(
+        () => {
+
+            toast.style.display =
+                "none";
+
+        },
+        3500
+    );
+
+}
+
+
+/* ---------------------------------------------------------
+   INITIAL
+--------------------------------------------------------- */
+
+function restoreLastMatch(){
+
+    const history =
+        getMatchHistory();
+
+    if(!history.length){
+        return;
+    }
+
+    /*
+       Jangan langsung menampilkan hasil ke tabel utama.
+       Riwayat tetap tersedia di bawah dan bisa dimuat kapan saja.
+    */
+
+    renderHistory();
+
+    renderMergedResult(
+        getSavedMergedResult()
+    );
+
+}
+
+restoreLastMatch();
+
+
+
+window.addEventListener(
+    "beforeunload",
+    async () => {
+
+        if(ocrWorker){
+
+            try{
+
+                await ocrWorker.terminate();
+
+            }catch(e){}
+
+        }
+
+    }
+);
+
+</script>
+
+</body>
+</html>
